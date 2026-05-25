@@ -13,22 +13,36 @@ import (
 	"kronize/internal/server"
 )
 
+func getAddr() string {
+	if v := os.Getenv("ADDR"); v != "" {
+		return v
+	}
+	return ":8080"
+}
+
+func getJWTSecret(secret string) string {
+	if secret != "" {
+		return secret
+	}
+	if v := os.Getenv("JWT_SECRET"); v != "" {
+		return v
+	}
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		log.Fatalf("failed to generate JWT secret: %v", err)
+	}
+	log.Println("generated random JWT secret")
+	return hex.EncodeToString(b)
+}
+
 func main() {
 	dbPath := flag.String("db", "/data/kronize.db", "Path to SQLite database")
 	scriptsDir := flag.String("scripts", "/data/scripts", "Path to Python scripts directory")
-	addr := flag.String("addr", ":8080", "HTTP listen address")
-	jwtSecret := flag.String("jwt-secret", "", "JWT signing secret (default: auto-generated)")
+	addr := flag.String("addr", getAddr(), "HTTP listen address (overrides ADDR env)")
+	jwtSecret := flag.String("jwt-secret", "", "JWT signing secret (overrides JWT_SECRET env)")
 	flag.Parse()
 
-	secret := *jwtSecret
-	if secret == "" {
-		b := make([]byte, 32)
-		if _, err := rand.Read(b); err != nil {
-			log.Fatalf("failed to generate JWT secret: %v", err)
-		}
-		secret = hex.EncodeToString(b)
-		log.Println("generated random JWT secret")
-	}
+	secret := getJWTSecret(*jwtSecret)
 
 	if err := os.MkdirAll(*scriptsDir, 0755); err != nil {
 		log.Fatalf("failed to create scripts directory: %v", err)

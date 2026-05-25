@@ -76,6 +76,8 @@ resource "null_resource" "container_setup" {
     registry_url      = var.registry_url
     registry_username = nonsensitive(sha256(var.registry_username))
     registry_password = nonsensitive(sha256(var.registry_password))
+    jwt_secret        = nonsensitive(sha256(var.jwt_secret))
+    app_port          = var.app_port
   }
 
   connection {
@@ -91,6 +93,7 @@ resource "null_resource" "container_setup" {
       registry_username = var.registry_username
       registry_password = var.registry_password
       app_port          = var.app_port
+      jwt_secret        = var.jwt_secret
       domain            = var.domain
     })
     destination = "/tmp/kronize-setup.sh"
@@ -105,49 +108,6 @@ resource "null_resource" "container_setup" {
       "pct push ${var.kronize_ct_id} /tmp/kronize-setup.sh /tmp/kronize-setup.sh",
       "pct exec ${var.kronize_ct_id} -- chmod +x /tmp/kronize-setup.sh",
       "pct exec ${var.kronize_ct_id} -- /tmp/kronize-setup.sh"
-    ]
-  }
-}
-
-# ── Copy kronize binary + start service ──────────────────
-resource "null_resource" "deploy_binary" {
-  depends_on = [null_resource.container_setup]
-
-  triggers = {
-    binary_sha = try(filemd5("${path.module}/../../kronize"), "")
-  }
-
-  connection {
-    type     = "ssh"
-    user     = var.proxmox_ssh_user
-    password = var.proxmox_ssh_password
-    host     = var.proxmox_host
-  }
-
-  provisioner "file" {
-    source      = "${path.module}/../../kronize"
-    destination = "/tmp/kronize"
-  }
-
-  provisioner "file" {
-    content = templatefile("${path.module}/templates/kronize.service.tftpl", {
-      app_port     = var.app_port
-      jwt_secret   = var.jwt_secret
-    })
-    destination = "/tmp/kronize.service"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "pct start ${var.kronize_ct_id} || true",
-      "until pct status ${var.kronize_ct_id} | grep -q running; do sleep 1; done",
-      "sleep 2",
-      "pct push ${var.kronize_ct_id} /tmp/kronize /usr/local/bin/kronize",
-      "pct exec ${var.kronize_ct_id} -- chmod +x /usr/local/bin/kronize",
-      "pct push ${var.kronize_ct_id} /tmp/kronize.service /etc/systemd/system/kronize.service",
-      "pct exec ${var.kronize_ct_id} -- systemctl daemon-reload",
-      "pct exec ${var.kronize_ct_id} -- systemctl enable kronize",
-      "pct exec ${var.kronize_ct_id} -- systemctl restart kronize || pct exec ${var.kronize_ct_id} -- systemctl start kronize"
     ]
   }
 }

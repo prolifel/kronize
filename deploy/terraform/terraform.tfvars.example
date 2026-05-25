@@ -8,13 +8,17 @@ proxmox_node             = "pve"
 kronize_ct_id    = 109
 ct_root_password = "change-me"
 storage_pool     = "local-lvm"
+cpu_cores        = 1
+disk_size        = 5G
 
 # ── Docker registry ──────────────────────────────────────
+registry_url     = "your-registry-url"
 registry_username = "your-registry-user"
 registry_password = "your-registry-password"
 
 # ── App ──────────────────────────────────────────────────
 domain     = "kronize.yourdomain.com"
+app_port   = 8080
 jwt_secret = "change-me-to-a-random-string"
 tls_cert_file = "/etc/traefik/certs/kronize.yourdomain.com.crt"
 tls_key_file  = "/etc/traefik/certs/kronize.yourdomain.com.key"
