@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"kronize/internal/auth"
+	"kronize/internal/db"
 	"kronize/internal/handler"
 	"kronize/internal/scheduler"
-	"kronize/internal/db"
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -48,9 +48,10 @@ func (s *Server) Start() error {
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
-	r.Use(auth.Middleware(s.JWTSecret))
 
 	r.Route("/api", func(r chi.Router) {
+		r.Use(auth.Middleware(s.JWTSecret))
+
 		r.Post("/auth/register", handler.Register(s.DB, s.JWTSecret))
 		r.Post("/auth/login", handler.Login(s.DB, s.JWTSecret))
 		r.Post("/auth/logout", handler.Logout())
