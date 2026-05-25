@@ -84,7 +84,7 @@ func (r *Runner) runJob(job *model.Job) {
 	if image == "" {
 		image = "kronize/python-runner"
 	}
-	args = append(args, image, "python", "/code/main.py")
+	args = append(args, image, "/code/main.py")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
