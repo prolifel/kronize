@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"kronize/internal/auth"
 	"kronize/internal/db"
 	"kronize/internal/server"
 )
@@ -56,6 +57,19 @@ func main() {
 
 	if err := db.Migrate(database); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
+	}
+
+	adminPass := os.Getenv("ADMIN_PASSWORD")
+	if adminPass == "" {
+		adminPass = "admin"
+		log.Println("ADMIN_PASSWORD not set, using default: admin")
+	}
+	adminHash, err := auth.HashPassword(adminPass)
+	if err != nil {
+		log.Fatalf("failed to hash admin password: %v", err)
+	}
+	if err := db.SeedAdmin(database, adminHash); err != nil {
+		log.Fatalf("failed to seed admin: %v", err)
 	}
 
 	srv := server.New(database, *addr, secret, *scriptsDir)

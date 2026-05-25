@@ -105,7 +105,7 @@ variable "bridge" {
 variable "registry_url" {
   description = "Docker registry host"
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 variable "registry_username" {

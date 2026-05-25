@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func Open(path string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_foreign_keys=on")
+	db, err := sql.Open("sqlite", path+"?_journal_mode=WAL&_foreign_keys=on")
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
@@ -24,6 +24,8 @@ func Migrate(db *sql.DB) error {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		username TEXT UNIQUE NOT NULL,
 		password_hash TEXT NOT NULL,
+		role TEXT NOT NULL DEFAULT 'user',
+		must_change_password INTEGER NOT NULL DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 

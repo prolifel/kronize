@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 
-const publicPaths = ['/login', '/register']
+const publicPaths = ['/login']
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout, isAuthenticated, loading } = useAuth()
@@ -20,6 +20,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { to: '/jobs', label: 'Jobs' },
     { to: '/executions', label: 'Executions' },
   ]
+
+  if (user?.role === 'admin') {
+    navLinks.push({ to: '/users', label: 'Users' })
+  }
 
   const isActive = (path: string) => location.pathname.startsWith(path)
 

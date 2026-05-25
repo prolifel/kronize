@@ -20,9 +20,6 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  register: (data: { username: string; password: string }) =>
-    request<LoginResponse>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
-
   login: (data: { username: string; password: string }) =>
     request<LoginResponse>('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
 
@@ -31,6 +28,21 @@ export const api = {
 
   getCurrentUser: () =>
     request<User>('/auth/me'),
+
+  changePassword: (data: { current_password: string; new_password: string }) =>
+    request<{ message: string }>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
+
+  listUsers: () =>
+    request<User[]>('/users'),
+
+  createUser: (data: { username: string; password: string; role: string }) =>
+    request<User>('/users', { method: 'POST', body: JSON.stringify(data) }),
+
+  updateUser: (id: number, data: { username?: string; password?: string; role?: string }) =>
+    request<User>(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  deleteUser: (id: number) =>
+    request<{ message: string }>(`/users/${id}`, { method: 'DELETE' }),
 
   listJobs: (enabledOnly?: boolean) =>
     request<Job[]>(`/jobs${enabledOnly ? '?enabled=true' : ''}`),

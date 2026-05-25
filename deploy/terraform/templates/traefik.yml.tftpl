@@ -9,7 +9,7 @@ http:
   routers:
     kronize:
       entryPoints:
-        - frontend
+        - kronize-frontend
 %{ if domain != "" ~}
       rule: "Host(`${domain}`)"
       tls: {}
@@ -21,7 +21,7 @@ http:
 %{ if domain == "" ~}
     kronize-api:
       entryPoints:
-        - backend
+        - kronize-backend
       rule: "PathPrefix(`/api/`) || PathPrefix(`/assets/`)"
       service: kronize
 %{ endif ~}

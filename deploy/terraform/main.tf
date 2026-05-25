@@ -112,16 +112,12 @@ resource "null_resource" "container_setup" {
   }
 }
 
-# ── Deploy config to Traefik container ───────────────────
+# ── Deploy config to Traefik container (port-based) ──────
 resource "null_resource" "traefik_deploy" {
-  count = var.domain != "" ? 1 : 0
-
   depends_on = [local_file.traefik_config]
 
   triggers = {
     config_sha = sha256(local_file.traefik_config.content)
-    cert_sha   = try(filemd5("${path.module}/../certs/${var.domain}.cer"), "")
-    key_sha    = try(filemd5("${path.module}/../certs/${var.domain}.key"), "")
   }
 
   connection {
@@ -134,6 +130,36 @@ resource "null_resource" "traefik_deploy" {
   provisioner "file" {
     content     = local_file.traefik_config.content
     destination = "/tmp/kronize.yml"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "pct start ${var.traefik_ct_id} || true",
+      "until pct status ${var.traefik_ct_id} | grep -q running; do sleep 1; done",
+      "sleep 2",
+      "pct exec ${var.traefik_ct_id} -- mkdir -p /etc/traefik/conf.d",
+      "pct push ${var.traefik_ct_id} /tmp/kronize.yml ${var.traefik_config_dir}/kronize.yml",
+      "rm /tmp/kronize.yml"
+    ]
+  }
+}
+
+# ── Deploy TLS certs to Traefik container (domain only) ──
+resource "null_resource" "traefik_certs" {
+  count = var.domain != "" ? 1 : 0
+
+  depends_on = [null_resource.traefik_deploy]
+
+  triggers = {
+    cert_sha = try(filemd5("${path.module}/../certs/${var.domain}.cer"), "")
+    key_sha  = try(filemd5("${path.module}/../certs/${var.domain}.key"), "")
+  }
+
+  connection {
+    type     = "ssh"
+    user     = var.proxmox_ssh_user
+    password = var.proxmox_ssh_password
+    host     = var.proxmox_host
   }
 
   provisioner "file" {
@@ -152,10 +178,9 @@ resource "null_resource" "traefik_deploy" {
       "until pct status ${var.traefik_ct_id} | grep -q running; do sleep 1; done",
       "sleep 2",
       "pct exec ${var.traefik_ct_id} -- mkdir -p ${dirname(var.tls_cert_file)}",
-      "pct push ${var.traefik_ct_id} /tmp/kronize.yml ${var.traefik_config_dir}/kronize.yml",
       "pct push ${var.traefik_ct_id} /tmp/kronize.crt ${var.tls_cert_file}",
       "pct push ${var.traefik_ct_id} /tmp/kronize.key ${var.tls_key_file}",
-      "rm /tmp/kronize.yml /tmp/kronize.crt /tmp/kronize.key"
+      "rm /tmp/kronize.crt /tmp/kronize.key"
     ]
   }
 }

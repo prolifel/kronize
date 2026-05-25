@@ -4,8 +4,7 @@ import type { User } from './types'
 
 interface AuthContextValue {
   user: User | null
-  login: (username: string, password: string) => Promise<void>
-  register: (username: string, password: string) => Promise<void>
+  login: (username: string, password: string) => Promise<User>
   logout: () => Promise<void>
   isAuthenticated: boolean
   loading: boolean
@@ -27,11 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     const res = await api.login({ username, password })
     setUser(res.user)
-  }, [])
-
-  const register = useCallback(async (username: string, password: string) => {
-    const res = await api.register({ username, password })
-    setUser(res.user)
+    return res.user
   }, [])
 
   const logout = useCallback(async () => {
@@ -40,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: user !== null, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: user !== null, loading }}>
       {children}
     </AuthContext.Provider>
   )

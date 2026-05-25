@@ -52,10 +52,10 @@ func (s *Server) Start() error {
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth.Middleware(s.JWTSecret))
 
-		r.Post("/auth/register", handler.Register(s.DB, s.JWTSecret))
 		r.Post("/auth/login", handler.Login(s.DB, s.JWTSecret))
 		r.Post("/auth/logout", handler.Logout())
 		r.Get("/auth/me", handler.GetCurrentUser(s.DB))
+		r.Post("/auth/change-password", handler.ChangePassword(s.DB))
 
 		r.Get("/jobs", handler.ListJobs(s.DB))
 		r.Post("/jobs", handler.CreateJob(s.DB, s.Scheduler, s.ScriptsDir))
@@ -72,6 +72,14 @@ func (s *Server) Start() error {
 
 		r.Get("/settings", handler.GetSettings(s.DB))
 		r.Put("/settings", handler.UpdateSettings(s.DB))
+
+		r.Group(func(r chi.Router) {
+			r.Use(auth.AdminOnly)
+			r.Get("/users", handler.ListUsers(s.DB))
+			r.Post("/users", handler.CreateUser(s.DB))
+			r.Put("/users/{id}", handler.UpdateUser(s.DB))
+			r.Delete("/users/{id}", handler.DeleteUser(s.DB))
+		})
 	})
 
 	dist := "./frontend/dist"

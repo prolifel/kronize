@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 
 export default function LoginPage() {
@@ -13,8 +13,12 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     try {
-      await login(username, password)
-      navigate('/dashboard')
+      const user = await login(username, password)
+      if (user.must_change_password) {
+        navigate('/change-password')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
     }
@@ -54,12 +58,6 @@ export default function LoginPage() {
           >
             Sign In
           </button>
-          <p className="text-center text-sm text-gray-500">
-            No account?{' '}
-            <Link to="/register" className="text-blue-600 hover:text-blue-800">
-              Register
-            </Link>
-          </p>
         </form>
       </div>
     </div>
