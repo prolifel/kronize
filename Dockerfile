@@ -27,6 +27,7 @@ RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
 COPY --from=builder /build/kronize .
+COPY --from=builder /build/frontend/dist ./frontend/dist
 
 EXPOSE 8080
 
