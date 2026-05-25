@@ -149,3 +149,86 @@ func TestCreateAndUpdateJob(t *testing.T) {
 		t.Error("expected error after delete")
 	}
 }
+
+func TestCreateAndCompleteExecution(t *testing.T) {
+	d := setupDB(t)
+
+	user, err := CreateUser(d, model.CreateUserRequest{Username: "exectest"}, "hash")
+	if err != nil {
+		t.Fatalf("CreateUser() error = %v", err)
+	}
+
+	req := model.CreateJobRequest{
+		Name:           "exec-test",
+		CronExpression: "0 * * * *",
+		PythonCode:     "print('x')",
+	}
+	j, err := CreateJob(d, req, user.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	e, err := CreateExecution(d, j.ID)
+	if err != nil {
+		t.Fatalf("CreateExecution() error = %v", err)
+	}
+	if e.Status != "running" {
+		t.Errorf("status = %q, want %q", e.Status, "running")
+	}
+
+	exitCode := 0
+	if err := CompleteExecution(d, e.ID, "success", "output", "", exitCode, 1500); err != nil {
+		t.Fatalf("CompleteExecution() error = %v", err)
+	}
+
+	got, err := GetExecution(d, e.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Status != "success" {
+		t.Errorf("status = %q, want %q", got.Status, "success")
+	}
+	if got.Stdout != "output" {
+		t.Errorf("stdout = %q, want %q", got.Stdout, "output")
+	}
+
+	execs, err := ListExecutionsByJob(d, j.ID, 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(execs) != 1 {
+		t.Errorf("expected 1 execution, got %d", len(execs))
+	}
+}
+
+func TestSettings(t *testing.T) {
+	d := setupDB(t)
+
+	if err := SetSetting(d, "teams_webhook_url", "https://example.com/webhook"); err != nil {
+		t.Fatalf("SetSetting() error = %v", err)
+	}
+
+	val, err := GetSetting(d, "teams_webhook_url")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val != "https://example.com/webhook" {
+		t.Errorf("value = %q, want %q", val, "https://example.com/webhook")
+	}
+
+	val, err = GetSetting(d, "nonexistent")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if val != "" {
+		t.Errorf("expected empty, got %q", val)
+	}
+
+	all, err := GetAllSettings(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != 1 {
+		t.Errorf("expected 1 setting, got %d", len(all))
+	}
+}
