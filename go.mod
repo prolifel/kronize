@@ -3,9 +3,9 @@ module kronize
 go 1.25.0
 
 require (
-	github.com/go-chi/chi/v5 v5.3.0 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
-	github.com/mattn/go-sqlite3 v1.14.44 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
-	golang.org/x/crypto v0.28.0 // indirect
+	github.com/go-chi/chi/v5 v5.3.0
+	github.com/golang-jwt/jwt/v5 v5.3.1
+	github.com/mattn/go-sqlite3 v1.14.44
+	github.com/robfig/cron/v3 v3.0.1
+	golang.org/x/crypto v0.52.0
 )
