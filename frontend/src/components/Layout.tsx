@@ -1,12 +1,19 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 
+const publicPaths = ['/login', '/register']
+
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user, logout, isAuthenticated } = useAuth()
+  const { user, logout, isAuthenticated, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
 
-  if (!isAuthenticated) return <>{children}</>
+  if (loading) return null
+
+  if (!isAuthenticated) {
+    if (publicPaths.includes(location.pathname)) return <>{children}</>
+    return <Navigate to="/login" replace />
+  }
 
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard' },

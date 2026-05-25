@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 import { api } from './api'
 import type { User } from './types'
 
@@ -8,12 +8,21 @@ interface AuthContextValue {
   register: (username: string, password: string) => Promise<void>
   logout: () => Promise<void>
   isAuthenticated: boolean
+  loading: boolean
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.getCurrentUser()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false))
+  }, [])
 
   const login = useCallback(async (username: string, password: string) => {
     const res = await api.login({ username, password })
@@ -31,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: user !== null }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isAuthenticated: user !== null, loading }}>
       {children}
     </AuthContext.Provider>
   )

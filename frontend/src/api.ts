@@ -1,4 +1,4 @@
-import type { Job, JobFormData, Execution, Stats, Setting, LoginResponse } from './types'
+import type { Job, JobFormData, Execution, Stats, Setting, LoginResponse, User } from './types'
 
 const BASE = '/api'
 
@@ -9,6 +9,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   })
   if (!res.ok) {
+    if (res.status === 401 && !path.startsWith('/auth/')) {
+      window.location.href = '/login'
+      throw new Error('redirecting to login')
+    }
     const body = await res.json().catch(() => ({}))
     throw new Error(body.error || `HTTP ${res.status}`)
   }
@@ -24,6 +28,9 @@ export const api = {
 
   logout: () =>
     request<{ message: string }>('/auth/logout', { method: 'POST' }),
+
+  getCurrentUser: () =>
+    request<User>('/auth/me'),
 
   listJobs: (enabledOnly?: boolean) =>
     request<Job[]>(`/jobs${enabledOnly ? '?enabled=true' : ''}`),

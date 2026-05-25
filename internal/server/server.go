@@ -55,6 +55,7 @@ func (s *Server) Start() error {
 		r.Post("/auth/register", handler.Register(s.DB, s.JWTSecret))
 		r.Post("/auth/login", handler.Login(s.DB, s.JWTSecret))
 		r.Post("/auth/logout", handler.Logout())
+		r.Get("/auth/me", handler.GetCurrentUser(s.DB))
 
 		r.Get("/jobs", handler.ListJobs(s.DB))
 		r.Post("/jobs", handler.CreateJob(s.DB, s.Scheduler, s.ScriptsDir))

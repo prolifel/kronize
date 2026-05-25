@@ -67,6 +67,18 @@ func Login(database *sql.DB, jwtSecret string) http.HandlerFunc {
 	}
 }
 
+func GetCurrentUser(database *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID := auth.UserIDFromContext(r.Context())
+		user, err := db.GetUserByID(database, userID)
+		if err != nil {
+			jsonError(w, http.StatusNotFound, "user not found")
+			return
+		}
+		jsonResponse(w, http.StatusOK, user)
+	}
+}
+
 func Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
