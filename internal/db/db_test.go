@@ -88,3 +88,64 @@ func TestCreateAndGetUser(t *testing.T) {
 		t.Fatal("expected error for nonexistent user")
 	}
 }
+
+func TestCreateAndUpdateJob(t *testing.T) {
+	d := setupDB(t)
+
+	user, err := CreateUser(d, model.CreateUserRequest{Username: "jobtest"}, "hash")
+	if err != nil {
+		t.Fatalf("CreateUser() error = %v", err)
+	}
+
+	req := model.CreateJobRequest{
+		Name:           "test-job",
+		Description:    "A test job",
+		CronExpression: "0 * * * *",
+		PythonCode:     "print('hello')",
+		EnvVars:        `{"KEY": "val"}`,
+		LogLevel:       "info",
+	}
+	j, err := CreateJob(d, req, user.ID)
+	if err != nil {
+		t.Fatalf("CreateJob() error = %v", err)
+	}
+	if j.Name != "test-job" {
+		t.Errorf("name = %q, want %q", j.Name, "test-job")
+	}
+	if !j.Enabled {
+		t.Error("expected enabled by default")
+	}
+
+	jobs, err := ListJobs(d, false)
+	if err != nil {
+		t.Fatalf("ListJobs() error = %v", err)
+	}
+	if len(jobs) != 1 {
+		t.Fatalf("expected 1 job, got %d", len(jobs))
+	}
+
+	enabled := false
+	upd := model.UpdateJobRequest{Enabled: &enabled}
+	updated, err := UpdateJob(d, j.ID, upd)
+	if err != nil {
+		t.Fatalf("UpdateJob() error = %v", err)
+	}
+	if updated.Enabled {
+		t.Error("expected job to be disabled after update")
+	}
+
+	enabledJobs, err := ListEnabledJobs(d)
+	if err != nil {
+		t.Fatalf("ListEnabledJobs() error = %v", err)
+	}
+	if len(enabledJobs) != 0 {
+		t.Errorf("expected 0 enabled jobs, got %d", len(enabledJobs))
+	}
+
+	if err := DeleteJob(d, j.ID); err != nil {
+		t.Fatalf("DeleteJob() error = %v", err)
+	}
+	if _, err := GetJobByID(d, j.ID); err == nil {
+		t.Error("expected error after delete")
+	}
+}
