@@ -29,7 +29,12 @@ export default function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
     onChange(JSON.stringify(obj))
   }
 
-  const addVar = () => update([...pairs, { key: '', value: '' }])
+  const addVar = () => {
+    const obj = JSON.parse(value || '{}')
+    const key = `VAR${Object.keys(obj).length + 1}`
+    obj[key] = ''
+    onChange(JSON.stringify(obj))
+  }
 
   const removeVar = (i: number) => update(pairs.filter((_, idx) => idx !== i))
 
