@@ -12,6 +12,7 @@ export default function JobDetailPage() {
   const [expandedExec, setExpandedExec] = useState<number | null>(null)
   const [expandedDetail, setExpandedDetail] = useState<Execution | null>(null)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const load = () => {
     if (!id) return
@@ -26,6 +27,8 @@ export default function JobDetailPage() {
     if (!id) return
     try {
       await api.runJob(Number(id))
+      setSuccess('Job triggered successfully')
+      setTimeout(() => setSuccess(''), 3000)
       setTimeout(load, 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to trigger')
@@ -95,6 +98,7 @@ export default function JobDetailPage() {
       </div>
 
       {error && <div className="bg-red-50 text-red-700 px-4 py-2 rounded text-sm mb-4">{error}</div>}
+      {success && <div className="bg-green-50 text-green-700 px-4 py-2 rounded text-sm mb-4">{success}</div>}
 
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Execution History</h2>
 

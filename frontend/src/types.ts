@@ -9,6 +9,7 @@ export interface Job {
   name: string
   description: string
   cron_expression: string
+  python_code: string
   image: string
   env_vars: string
   log_level: string

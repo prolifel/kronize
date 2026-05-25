@@ -29,8 +29,8 @@ export default function JobFormPage() {
           name: job.name,
           description: job.description,
           cron_expression: job.cron_expression,
-          python_code: '',
-          env_vars: '{}',
+          python_code: job.python_code || '',
+          env_vars: job.env_vars || '{}',
           log_level: job.log_level,
         })
       }).catch((err) => setError(err.message))

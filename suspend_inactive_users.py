@@ -84,7 +84,7 @@ def list_candidates(service: any, customer: str, exclude_ous: set[str], cutoff: 
         req = service.users().list(
             customer=customer,
             projection="basic",
-            viewType="admin",
+            viewType="admin_view",
             maxResults=500,
             pageToken=page_token,
         )

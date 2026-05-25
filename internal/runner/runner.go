@@ -69,8 +69,15 @@ func (r *Runner) runJob(job *model.Job) {
 		return
 	}
 
+	scriptDir := filepath.Dir(scriptPath)
+	absScriptDir, err := filepath.Abs(scriptDir)
+	if err != nil {
+		r.failExecution(exe.ID, "", fmt.Sprintf("failed to resolve absolute script dir: %v", err))
+		return
+	}
+
 	args := []string{"run", "--rm"}
-	args = append(args, "-v", fmt.Sprintf("%s:/code:ro", filepath.Dir(scriptPath)))
+	args = append(args, "-v", fmt.Sprintf("%s:/code:ro", absScriptDir))
 	args = append(args, "--name", fmt.Sprintf("kronize-job-%d-%d", job.ID, exe.ID))
 
 	var envVars map[string]string

@@ -52,7 +52,6 @@ func CreateJob(database *sql.DB, sched *scheduler.Scheduler, scriptsDir string) 
 			return
 		}
 		sched.AddJob(job)
-		job.PythonCode = ""
 		job.EnvVars = ""
 		jsonResponse(w, http.StatusCreated, job)
 	}
@@ -69,10 +68,6 @@ func GetJob(database *sql.DB) http.HandlerFunc {
 		if err != nil {
 			jsonError(w, http.StatusNotFound, "job not found")
 			return
-		}
-		job.PythonCode = ""
-		if job.EnvVars != "" && job.EnvVars != "{}" {
-			job.EnvVars = `{"masked":true}`
 		}
 		jsonResponse(w, http.StatusOK, job)
 	}
