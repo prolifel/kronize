@@ -46,18 +46,9 @@ dev-api:
 dev-ui: frontend-dev
 
 # ── Docker ────────────────────────────────────────────────
-PROXMOX_HOST     ?= 172.17.5.86
-KRONIZE_CT_ID    ?= 110
 
 docker-build:
 	docker build -t kronize/python-runner docker/python-runner/
-
-redeploy:
-	ssh root@$(PROXMOX_HOST) "\
-		pct exec $(KRONIZE_CT_ID) -- docker compose -f /opt/kronize/docker-compose.yml pull kronize && \
-		pct exec $(KRONIZE_CT_ID) -- docker compose -f /opt/kronize/docker-compose.yml up -d kronize \
-	"
-	@echo "Done. kronize restarted on container $(KRONIZE_CT_ID)."
 
 # ── Clean ─────────────────────────────────────────────────
 clean:

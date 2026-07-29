@@ -1,6 +1,6 @@
 services:
   kronize:
-    image: ${REGISTRY_URL}/kronize/kronize:kronize-v1.0.7
+    image: ${REGISTRY_URL}/kronize/kronize:kronize-v1.0.8
     container_name: kronize
     restart: unless-stopped
     networks:
@@ -20,7 +20,7 @@ services:
       - "${DOCKER_GID:-999}"
 
   python-runner:
-    image: ${REGISTRY_URL}/kronize/python-runner:python-runner-v1.0.1
+    image: ${REGISTRY_URL}/kronize/python-runner:python-runner-v1.0.2
     container_name: kronize-python-runner
     restart: unless-stopped
 
