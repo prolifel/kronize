@@ -23,7 +23,7 @@ RUN CGO_ENABLED=0 go build -o kronize .
 # ── Runtime ─────────────────────────────────────────────────
 FROM alpine:3.21
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata docker-cli
 
 WORKDIR /app
 COPY --from=builder /build/kronize .

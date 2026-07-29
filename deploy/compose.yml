@@ -15,6 +15,9 @@ services:
     volumes:
       - kronize-data:/data
       - kronize-scripts:/data/scripts
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "${DOCKER_GID:-999}"
 
   python-runner:
     image: ${REGISTRY_URL}/kronize/python-runner:python-runner-v1.0.1
@@ -25,6 +28,3 @@ services:
 volumes:
   kronize-data:
   kronize-scripts:
-
-networks:
-  kronize-net:
