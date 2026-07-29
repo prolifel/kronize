@@ -89,7 +89,12 @@ func (r *Runner) runJob(job *model.Job) {
 
 	image := job.Image
 	if image == "" {
-		image = "kronize/python-runner"
+		reg := os.Getenv("REGISTRY_URL")
+		if reg == "" {
+			image = "kronize/python-runner"
+		} else {
+			image = reg + "/kronize/python-runner:python-runner-v1.0.1"
+		}
 	}
 	args = append(args, image, "/code/main.py")
 

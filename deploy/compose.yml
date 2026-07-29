@@ -23,7 +23,6 @@ services:
     image: ${REGISTRY_URL}/kronize/python-runner:python-runner-v1.0.1
     container_name: kronize-python-runner
     restart: unless-stopped
-    entrypoint: ["sleep", "infinity"]
 
 volumes:
   kronize-data:
