@@ -12,7 +12,9 @@ RUN pip install --no-cache-dir \
     boto3 \
     botocore \
     requests \
-    pyyaml
+    pyyaml \
+    python-dotenv \
+    beautifulsoup4
 
 WORKDIR /code
 ENTRYPOINT ["python"]
