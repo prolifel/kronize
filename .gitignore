@@ -187,3 +187,4 @@ data/scripts
 scripts/
 
 .DS_Store
+.superpowers/
