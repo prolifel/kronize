@@ -28,7 +28,7 @@ function parseRawText(text: string): { pairs: Record<string, string>; warnings: 
       warnings.push(`line ${i + 1}: empty key`)
       continue
     }
-    pairs[key] = value
+    pairs[key] = value.replace(/^"(.*)"$/, '$1')
   }
   return { pairs, warnings }
 }
