@@ -4,9 +4,11 @@ import { api } from '../api'
 import StatusBadge from '../components/StatusBadge'
 import ExecutionLog from '../components/ExecutionLog'
 import type { Job, Execution } from '../types'
+import { useAuth } from '../AuthContext'
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { user: currentUser } = useAuth()
   const [job, setJob] = useState<Job | null>(null)
   const [executions, setExecutions] = useState<Execution[]>([])
   const [expandedExec, setExpandedExec] = useState<number | null>(null)
@@ -62,6 +64,8 @@ export default function JobDetailPage() {
 
   if (!job) return <p className="text-gray-500">Loading...</p>
 
+  const canManage = job.created_by === currentUser?.id || currentUser?.role === 'admin'
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -71,16 +75,20 @@ export default function JobDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge enabled={job.enabled} />
-          <Link to={`/jobs/${job.id}/edit`} className="text-sm text-blue-600 hover:text-blue-800">Edit</Link>
-          <button onClick={handleToggle} className="text-sm text-gray-600 hover:text-gray-800">
-            {job.enabled ? 'Disable' : 'Enable'}
-          </button>
-          <button
-            onClick={handleRun}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
-          >
-            Run Now
-          </button>
+          {canManage && (
+            <>
+              <Link to={`/jobs/${job.id}/edit`} className="text-sm text-blue-600 hover:text-blue-800">Edit</Link>
+              <button onClick={handleToggle} className="text-sm text-gray-600 hover:text-gray-800">
+                {job.enabled ? 'Disable' : 'Enable'}
+              </button>
+              <button
+                onClick={handleRun}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+              >
+                Run Now
+              </button>
+            </>
+          )}
         </div>
       </div>
 

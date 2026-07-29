@@ -116,7 +116,7 @@ func TestCreateAndUpdateJob(t *testing.T) {
 		t.Error("expected enabled by default")
 	}
 
-	jobs, err := ListJobs(d, false)
+	jobs, err := ListJobs(d, false, 0, "admin")
 	if err != nil {
 		t.Fatalf("ListJobs() error = %v", err)
 	}
@@ -176,8 +176,8 @@ func TestCreateAndCompleteExecution(t *testing.T) {
 		t.Errorf("status = %q, want %q", e.Status, "running")
 	}
 
-	exitCode := 0
-	if err := CompleteExecution(d, e.ID, "success", "output", "", exitCode, 1500); err != nil {
+	err = CompleteExecution(d, e.ID, "success", "output", "", 0, 1500)
+	if err != nil {
 		t.Fatalf("CompleteExecution() error = %v", err)
 	}
 

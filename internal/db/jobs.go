@@ -41,15 +41,30 @@ func GetJobByID(db *sql.DB, id int64) (*model.Job, error) {
 	return j, nil
 }
 
-func ListJobs(db *sql.DB, enabledOnly bool) ([]*model.Job, error) {
-	query := `SELECT id, name, description, cron_expression, image, env_vars, log_level, enabled, created_by, created_at, updated_at
-			  FROM jobs`
+func ListJobs(db *sql.DB, enabledOnly bool, userID int64, role string) ([]*model.Job, error) {
+	query := `SELECT id, name, description, cron_expression, image, env_vars, log_level, enabled, created_by, created_at, updated_at FROM jobs`
+	var args []interface{}
+	var clauses []string
+
+	if role != "admin" {
+		clauses = append(clauses, "created_by = ?")
+		args = append(args, userID)
+	}
 	if enabledOnly {
-		query += " WHERE enabled = 1"
+		clauses = append(clauses, "enabled = 1")
+	}
+	if len(clauses) > 0 {
+		query += " WHERE "
+		for i, c := range clauses {
+			if i > 0 {
+				query += " AND "
+			}
+			query += c
+		}
 	}
 	query += " ORDER BY created_at DESC"
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list jobs: %w", err)
 	}
@@ -120,7 +135,7 @@ func DeleteJob(db *sql.DB, id int64) error {
 }
 
 func ListEnabledJobs(db *sql.DB) ([]*model.Job, error) {
-	return ListJobs(db, true)
+	return ListJobs(db, true, 0, "admin")
 }
 
 func joinFields(fields []string) string {

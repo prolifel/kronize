@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -13,10 +14,44 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+type accessError struct {
+	Code int
+	Err  error
+}
+
+func (e *accessError) Error() string { return e.Err.Error() }
+
+func canAccessJob(database *sql.DB, userID int64, role string, jobID int64, forWrite bool) (*model.Job, *accessError) {
+	if role == "admin" {
+		job, err := db.GetJobByID(database, jobID)
+		if err != nil {
+			return nil, &accessError{Code: http.StatusNotFound, Err: fmt.Errorf("job not found")}
+		}
+		return job, nil
+	}
+	job, err := db.GetJobByID(database, jobID)
+	if err != nil {
+		return nil, &accessError{Code: http.StatusNotFound, Err: fmt.Errorf("job not found")}
+	}
+	if job.CreatedBy != userID {
+		if forWrite {
+			return nil, &accessError{Code: http.StatusForbidden, Err: fmt.Errorf("forbidden")}
+		}
+		return nil, &accessError{Code: http.StatusNotFound, Err: fmt.Errorf("job not found")}
+	}
+	return job, nil
+}
+
+func accessErrorJSON(w http.ResponseWriter, err *accessError) {
+	http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Err.Error()), err.Code)
+}
+
 func ListJobs(database *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		enabledOnly := r.URL.Query().Get("enabled") == "true"
-		jobs, err := db.ListJobs(database, enabledOnly)
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		jobs, err := db.ListJobs(database, enabledOnly, userID, role)
 		if err != nil {
 			jsonError(w, http.StatusInternalServerError, "failed to list jobs")
 			return
@@ -64,9 +99,11 @@ func GetJob(database *sql.DB) http.HandlerFunc {
 			jsonError(w, http.StatusBadRequest, "invalid job id")
 			return
 		}
-		job, err := db.GetJobByID(database, id)
-		if err != nil {
-			jsonError(w, http.StatusNotFound, "job not found")
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		job, aerr := canAccessJob(database, userID, role, id, false)
+		if aerr != nil {
+			accessErrorJSON(w, aerr)
 			return
 		}
 		jsonResponse(w, http.StatusOK, job)
@@ -78,6 +115,13 @@ func UpdateJob(database *sql.DB, sched *scheduler.Scheduler, scriptsDir string) 
 		id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "invalid job id")
+			return
+		}
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		_, aerr := canAccessJob(database, userID, role, id, true)
+		if aerr != nil {
+			accessErrorJSON(w, aerr)
 			return
 		}
 		var req model.UpdateJobRequest
@@ -104,6 +148,13 @@ func DeleteJob(database *sql.DB, sched *scheduler.Scheduler) http.HandlerFunc {
 			jsonError(w, http.StatusBadRequest, "invalid job id")
 			return
 		}
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		_, aerr := canAccessJob(database, userID, role, id, true)
+		if aerr != nil {
+			accessErrorJSON(w, aerr)
+			return
+		}
 		if err := db.DeleteJob(database, id); err != nil {
 			jsonError(w, http.StatusInternalServerError, "failed to delete job")
 			return
@@ -120,9 +171,11 @@ func RunJob(database *sql.DB, sched *scheduler.Scheduler) http.HandlerFunc {
 			jsonError(w, http.StatusBadRequest, "invalid job id")
 			return
 		}
-		job, err := db.GetJobByID(database, id)
-		if err != nil {
-			jsonError(w, http.StatusNotFound, "job not found")
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		job, aerr := canAccessJob(database, userID, role, id, true)
+		if aerr != nil {
+			accessErrorJSON(w, aerr)
 			return
 		}
 		sched.TriggerNow(job)
@@ -135,6 +188,13 @@ func ToggleJob(database *sql.DB, sched *scheduler.Scheduler) http.HandlerFunc {
 		id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "invalid job id")
+			return
+		}
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		_, aerr := canAccessJob(database, userID, role, id, true)
+		if aerr != nil {
+			accessErrorJSON(w, aerr)
 			return
 		}
 		current, err := db.GetJobByID(database, id)
