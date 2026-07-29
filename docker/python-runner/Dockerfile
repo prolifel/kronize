@@ -16,4 +16,6 @@ RUN pip install --no-cache-dir \
     python-dotenv \
     beautifulsoup4
 
-ENTRYPOINT ["python", "-"]
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
