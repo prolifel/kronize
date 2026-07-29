@@ -1,4 +1,4 @@
-import type { Job, JobFormData, Execution, Stats, Setting, LoginResponse, User } from './types'
+import type { Job, JobFormData, Execution, Stats, Setting, LoginResponse, User, RunnerImage } from './types'
 
 const BASE = '/api'
 
@@ -76,6 +76,18 @@ export const api = {
 
   getSettings: () =>
     request<Setting[]>('/settings'),
+
+  listRunners: () =>
+    request<RunnerImage[]>("/runners"),
+
+  createRunner: (data: { name: string; image: string; description: string }) =>
+    request<RunnerImage>("/runners", { method: "POST", body: JSON.stringify(data) }),
+
+  updateRunner: (id: number, data: { name?: string; image?: string; description?: string }) =>
+    request<RunnerImage>(`/runners/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+
+  deleteRunner: (id: number) =>
+    request<{ message: string }>(`/runners/${id}`, { method: "DELETE" }),
 
   updateSettings: (settings: Setting[]) =>
     request<Setting[]>('/settings', { method: 'PUT', body: JSON.stringify(settings) }),

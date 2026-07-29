@@ -185,3 +185,5 @@ pyrightconfig.json
 
 data/scripts
 scripts/
+
+.DS_Store

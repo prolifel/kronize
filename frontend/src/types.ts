@@ -28,6 +28,7 @@ export interface JobFormData {
   python_code: string
   env_vars: string
   log_level: string
+  image: string
 }
 
 export interface Execution {
@@ -52,6 +53,14 @@ export interface Stats {
 export interface Setting {
   key: string
   value: string
+}
+
+export interface RunnerImage {
+  id: number
+  name: string
+  image: string
+  description: string
+  created_at: string
 }
 
 export interface LoginResponse {

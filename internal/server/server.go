@@ -73,12 +73,17 @@ func (s *Server) Start() error {
 		r.Get("/settings", handler.GetSettings(s.DB))
 		r.Put("/settings", handler.UpdateSettings(s.DB))
 
+		r.Get("/runners", handler.ListRunnerImages(s.DB))
+
 		r.Group(func(r chi.Router) {
 			r.Use(auth.AdminOnly)
 			r.Get("/users", handler.ListUsers(s.DB))
 			r.Post("/users", handler.CreateUser(s.DB))
 			r.Put("/users/{id}", handler.UpdateUser(s.DB))
 			r.Delete("/users/{id}", handler.DeleteUser(s.DB))
+			r.Post("/runners", handler.CreateRunnerImage(s.DB))
+			r.Put("/runners/{id}", handler.UpdateRunnerImage(s.DB))
+			r.Delete("/runners/{id}", handler.DeleteRunnerImage(s.DB))
 		})
 	})
 

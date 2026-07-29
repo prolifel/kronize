@@ -4,7 +4,7 @@ import { api } from '../api'
 import CodeEditor from '../components/CodeEditor'
 import CronHelper from '../components/CronHelper'
 import EnvVarEditor from '../components/EnvVarEditor'
-import type { JobFormData } from '../types'
+import type { JobFormData, RunnerImage } from '../types'
 
 export default function JobFormPage() {
   const { id } = useParams()
@@ -18,9 +18,15 @@ export default function JobFormPage() {
     python_code: 'print("Hello from Kronize!")',
     env_vars: '{}',
     log_level: 'info',
+    image: '',
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [runners, setRunners] = useState<RunnerImage[]>([])
+
+  useEffect(() => {
+    api.listRunners().then(setRunners).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (id) {
@@ -32,6 +38,7 @@ export default function JobFormPage() {
           python_code: job.python_code || '',
           env_vars: job.env_vars || '{}',
           log_level: job.log_level,
+          image: job.image,
         })
       }).catch((err) => setError(err.message))
     }
@@ -86,6 +93,18 @@ export default function JobFormPage() {
               <option value="info">INFO</option>
               <option value="warn">WARN</option>
               <option value="error">ERROR</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+            <select
+              value={form.image}
+              onChange={(e) => setForm({ ...form, image: e.target.value })}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            >
+                {runners.map((r) => (
+                <option key={r.id} value={r.image}>{r.name}</option>
+              ))}
             </select>
           </div>
         </div>

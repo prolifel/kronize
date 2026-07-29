@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   ]
 
   if (user?.role === 'admin') {
-    navLinks.push({ to: '/users', label: 'Users' })
+    navLinks.push({ to: '/users', label: 'Users' }, { to: '/runners', label: 'Runner' })
   }
 
   const isActive = (path: string) => location.pathname.startsWith(path)

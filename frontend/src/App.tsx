@@ -9,6 +9,7 @@ import JobFormPage from './pages/JobFormPage'
 import JobDetailPage from './pages/JobDetailPage'
 import ExecutionsPage from './pages/ExecutionsPage'
 import UsersPage from './pages/UsersPage'
+import RunnersPage from './pages/RunnersPage'
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/jobs/:id/edit" element={<JobFormPage />} />
           <Route path="/executions" element={<ExecutionsPage />} />
           <Route path="/users" element={<UsersPage />} />
+          <Route path="/runners" element={<RunnersPage />} />
         </Routes>
       </Layout>
     </AuthProvider>
