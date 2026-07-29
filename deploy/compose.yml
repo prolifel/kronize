@@ -28,3 +28,6 @@ services:
 volumes:
   kronize-data:
   kronize-scripts:
+
+networks:
+  kronize-net:
