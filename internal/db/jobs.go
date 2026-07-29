@@ -15,10 +15,14 @@ func CreateJob(db *sql.DB, req model.CreateJobRequest, userID int64) (*model.Job
 	if envVars == "" {
 		envVars = "{}"
 	}
+	image := req.Image
+	if image == "" {
+		image = "kronize/python-runner"
+	}
 	res, err := db.Exec(
-		`INSERT INTO jobs (name, description, cron_expression, python_code, env_vars, log_level, created_by)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		req.Name, req.Description, req.CronExpression, req.PythonCode, envVars, logLevel, userID,
+		`INSERT INTO jobs (name, description, cron_expression, python_code, image, env_vars, log_level, created_by)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		req.Name, req.Description, req.CronExpression, req.PythonCode, image, envVars, logLevel, userID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create job: %w", err)
@@ -113,6 +117,10 @@ func UpdateJob(db *sql.DB, id int64, req model.UpdateJobRequest) (*model.Job, er
 	if req.Enabled != nil {
 		fields = append(fields, "enabled = ?")
 		args = append(args, *req.Enabled)
+	}
+	if req.Image != nil {
+		fields = append(fields, "image = ?")
+		args = append(args, *req.Image)
 	}
 
 	if len(fields) == 0 {

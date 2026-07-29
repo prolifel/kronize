@@ -24,6 +24,7 @@ type CreateJobRequest struct {
 	PythonCode     string `json:"python_code"`
 	EnvVars        string `json:"env_vars"`
 	LogLevel       string `json:"log_level"`
+	Image          string `json:"image"`
 }
 
 type UpdateJobRequest struct {
@@ -34,4 +35,5 @@ type UpdateJobRequest struct {
 	EnvVars        *string `json:"env_vars"`
 	LogLevel       *string `json:"log_level"`
 	Enabled        *bool   `json:"enabled"`
+	Image          *string `json:"image"`
 }
