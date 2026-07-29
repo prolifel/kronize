@@ -44,6 +44,13 @@ export default function JobFormPage() {
     }
   }, [id])
 
+  // pre-select first runner when list loads and no image is set yet
+  useEffect(() => {
+    if (runners.length > 0) {
+      setForm((prev) => (prev.image ? prev : { ...prev, image: runners[0].image }))
+    }
+  }, [runners])
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
