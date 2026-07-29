@@ -20,6 +20,21 @@ func Open(path string) (*sql.DB, error) {
 	return db, nil
 }
 
+const schemaJobs = `CREATE TABLE IF NOT EXISTS jobs (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT NOT NULL,
+	description TEXT DEFAULT '',
+	cron_expression TEXT NOT NULL,
+	python_code TEXT NOT NULL,
+	image_id INTEGER NOT NULL REFERENCES runner_images(id),
+	env_vars TEXT DEFAULT '{}',
+	log_level TEXT DEFAULT 'info',
+	enabled BOOLEAN DEFAULT 1,
+	created_by INTEGER REFERENCES users(id),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);`
+
 func Migrate(db *sql.DB) error {
 	schema := `
 	CREATE TABLE IF NOT EXISTS users (
@@ -31,20 +46,7 @@ func Migrate(db *sql.DB) error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
 
-	CREATE TABLE IF NOT EXISTS jobs (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		description TEXT DEFAULT '',
-		cron_expression TEXT NOT NULL,
-		python_code TEXT NOT NULL,
-		image TEXT DEFAULT 'kronize/python-runner',
-		env_vars TEXT DEFAULT '{}',
-		log_level TEXT DEFAULT 'info',
-		enabled BOOLEAN DEFAULT 1,
-		created_by INTEGER REFERENCES users(id),
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);
+	` + schemaJobs + `
 
 	CREATE TABLE IF NOT EXISTS executions (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,5 +77,20 @@ func Migrate(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("migrate: %w", err)
 	}
+
+	// migrate jobs table from old schema (image TEXT) to new schema (image_id FK)
+	var hasImageCol int
+	if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('jobs') WHERE name = 'image'").Scan(&hasImageCol); err != nil {
+		return fmt.Errorf("migrate check jobs schema: %w", err)
+	}
+	if hasImageCol > 0 {
+		if _, err := db.Exec("DROP TABLE IF EXISTS jobs"); err != nil {
+			return fmt.Errorf("migrate drop old jobs table: %w", err)
+		}
+		if _, err := db.Exec(schemaJobs); err != nil {
+			return fmt.Errorf("migrate recreate jobs table: %w", err)
+		}
+	}
+
 	return nil
 }

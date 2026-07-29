@@ -12,6 +12,7 @@ export interface Job {
   description: string
   cron_expression: string
   python_code: string
+  image_id: number
   image: string
   env_vars: string
   log_level: string
@@ -28,7 +29,7 @@ export interface JobFormData {
   python_code: string
   env_vars: string
   log_level: string
-  image: string
+  image_id: number
 }
 
 export interface Execution {

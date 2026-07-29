@@ -77,7 +77,7 @@ func CreateJob(database *sql.DB, sched *scheduler.Scheduler, scriptsDir string) 
 			jsonError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
-		if req.Name == "" || req.CronExpression == "" || req.PythonCode == "" {
+		if req.Name == "" || req.CronExpression == "" || req.PythonCode == "" || req.ImageID == 0 {
 			jsonError(w, http.StatusBadRequest, "name, cron_expression, and python_code required")
 			return
 		}

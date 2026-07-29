@@ -18,7 +18,7 @@ export default function JobFormPage() {
     python_code: 'print("Hello from Kronize!")',
     env_vars: '{}',
     log_level: 'info',
-    image: '',
+    image_id: 0,
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -38,18 +38,18 @@ export default function JobFormPage() {
           python_code: job.python_code || '',
           env_vars: job.env_vars || '{}',
           log_level: job.log_level,
-          image: job.image,
+          image_id: job.image_id,
         })
       }).catch((err) => setError(err.message))
     }
   }, [id])
 
-  // pre-select first runner when list loads and no image is set yet
+  // pre-select first runner when list loads and no image_id is set yet
   useEffect(() => {
-    if (runners.length > 0) {
-      setForm((prev) => (prev.image ? prev : { ...prev, image: runners[0].image }))
+    if (runners.length > 0 && form.image_id === 0) {
+      setForm((prev) => ({ ...prev, image_id: runners[0].id }))
     }
-  }, [runners])
+  }, [runners, form.image_id])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -105,12 +105,13 @@ export default function JobFormPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
             <select
-              value={form.image}
-              onChange={(e) => setForm({ ...form, image: e.target.value })}
+              value={form.image_id}
+              onChange={(e) => setForm({ ...form, image_id: Number(e.target.value) })}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
             >
-                {runners.map((r) => (
-                <option key={r.id} value={r.image}>{r.name}</option>
+              {runners.length === 0 && <option value={0}>No runners configured</option>}
+              {runners.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
               ))}
             </select>
           </div>

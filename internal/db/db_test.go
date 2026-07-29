@@ -29,6 +29,19 @@ func setupDB(t *testing.T) *sql.DB {
 	return d
 }
 
+func seedRunnerImage(t *testing.T, d *sql.DB) int64 {
+	t.Helper()
+	img, err := CreateRunnerImage(d, model.CreateRunnerImageRequest{
+		Name:        "default",
+		Image:       "kronize/python-runner",
+		Description: "Default runner",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return img.ID
+}
+
 func TestOpenAndMigrate(t *testing.T) {
 	d := setupDB(t)
 
@@ -46,7 +59,7 @@ func TestOpenAndMigrate(t *testing.T) {
 		tables = append(tables, name)
 	}
 
-	expected := []string{"executions", "jobs", "settings", "users"}
+	expected := []string{"executions", "jobs", "runner_images", "settings", "users"}
 	for _, e := range expected {
 		found := false
 		for _, tbl := range tables {
@@ -97,11 +110,14 @@ func TestCreateAndUpdateJob(t *testing.T) {
 		t.Fatalf("CreateUser() error = %v", err)
 	}
 
+	imageID := seedRunnerImage(t, d)
+
 	req := model.CreateJobRequest{
 		Name:           "test-job",
 		Description:    "A test job",
 		CronExpression: "0 * * * *",
 		PythonCode:     "print('hello')",
+		ImageID:        imageID,
 		EnvVars:        `{"KEY": "val"}`,
 		LogLevel:       "info",
 	}
@@ -111,6 +127,12 @@ func TestCreateAndUpdateJob(t *testing.T) {
 	}
 	if j.Name != "test-job" {
 		t.Errorf("name = %q, want %q", j.Name, "test-job")
+	}
+	if j.ImageID != imageID {
+		t.Errorf("image_id = %d, want %d", j.ImageID, imageID)
+	}
+	if j.Image != "kronize/python-runner" {
+		t.Errorf("image = %q, want %q", j.Image, "kronize/python-runner")
 	}
 	if !j.Enabled {
 		t.Error("expected enabled by default")
@@ -158,10 +180,13 @@ func TestCreateAndCompleteExecution(t *testing.T) {
 		t.Fatalf("CreateUser() error = %v", err)
 	}
 
+	imageID := seedRunnerImage(t, d)
+
 	req := model.CreateJobRequest{
 		Name:           "exec-test",
 		CronExpression: "0 * * * *",
 		PythonCode:     "print('x')",
+		ImageID:        imageID,
 	}
 	j, err := CreateJob(d, req, user.ID)
 	if err != nil {

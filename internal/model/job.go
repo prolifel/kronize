@@ -8,6 +8,7 @@ type Job struct {
 	Description    string    `json:"description"`
 	CronExpression string    `json:"cron_expression"`
 	PythonCode     string    `json:"python_code,omitempty"`
+	ImageID        int64     `json:"image_id"`
 	Image          string    `json:"image"`
 	EnvVars        string    `json:"env_vars,omitempty"`
 	LogLevel       string    `json:"log_level"`
@@ -24,7 +25,7 @@ type CreateJobRequest struct {
 	PythonCode     string `json:"python_code"`
 	EnvVars        string `json:"env_vars"`
 	LogLevel       string `json:"log_level"`
-	Image          string `json:"image"`
+	ImageID        int64  `json:"image_id"`
 }
 
 type UpdateJobRequest struct {
@@ -35,5 +36,5 @@ type UpdateJobRequest struct {
 	EnvVars        *string `json:"env_vars"`
 	LogLevel       *string `json:"log_level"`
 	Enabled        *bool   `json:"enabled"`
-	Image          *string `json:"image"`
+	ImageID        *int64  `json:"image_id"`
 }
