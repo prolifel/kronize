@@ -16,5 +16,4 @@ RUN pip install --no-cache-dir \
     python-dotenv \
     beautifulsoup4
 
-WORKDIR /code
-ENTRYPOINT ["python"]
+ENTRYPOINT ["python", "-"]

@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
+	"strings"
 	"time"
 
 	"kronize/internal/db"
@@ -59,25 +59,7 @@ func (r *Runner) runJob(job *model.Job) {
 	}
 	log.Printf("executing job %d (%s): execution=%d", job.ID, job.Name, exe.ID)
 
-	scriptPath := filepath.Join(r.scriptsDir, fmt.Sprintf("%d", job.ID), "main.py")
-	if err := os.MkdirAll(filepath.Dir(scriptPath), 0755); err != nil {
-		r.failExecution(exe.ID, "", fmt.Sprintf("failed to create script dir: %v", err))
-		return
-	}
-	if err := os.WriteFile(scriptPath, []byte(job.PythonCode), 0644); err != nil {
-		r.failExecution(exe.ID, "", fmt.Sprintf("failed to write script: %v", err))
-		return
-	}
-
-	scriptDir := filepath.Dir(scriptPath)
-	absScriptDir, err := filepath.Abs(scriptDir)
-	if err != nil {
-		r.failExecution(exe.ID, "", fmt.Sprintf("failed to resolve absolute script dir: %v", err))
-		return
-	}
-
-	args := []string{"run", "--rm"}
-	args = append(args, "-v", fmt.Sprintf("%s:/code:ro", absScriptDir))
+	args := []string{"run", "--rm", "-i"}
 	args = append(args, "--name", fmt.Sprintf("kronize-job-%d-%d", job.ID, exe.ID))
 
 	var envVars map[string]string
@@ -96,12 +78,13 @@ func (r *Runner) runJob(job *model.Job) {
 			image = reg + "/kronize/python-runner:latest"
 		}
 	}
-	args = append(args, image, "/code/main.py")
+	args = append(args, image)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd.Stdin = strings.NewReader(job.PythonCode)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
