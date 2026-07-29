@@ -4,7 +4,7 @@ services:
     container_name: kronize
     restart: unless-stopped
     networks:
-      - nginx_proxy
+      - kronize-net
     ports:
       - "6182:8080"
     environment:
@@ -27,5 +27,4 @@ volumes:
   kronize-scripts:
 
 networks:
-  nginx_proxy:
-    external: true
+  kronize-net:
