@@ -15,6 +15,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />
   }
 
+  if (isAuthenticated && publicPaths.includes(location.pathname)) {
+    return <Navigate to="/dashboard" replace />
+  }
+
   const navLinks = [
     { to: '/dashboard', label: 'Dashboard' },
     { to: '/jobs', label: 'Jobs' },

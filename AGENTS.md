@@ -1,170 +1,97 @@
-# Kronize — Context File
+# Repository Guidelines
 
-## Overview
+## Project Structure & Module Organization
 
-Kronize is a self-hosted cron management system ("lambda on baremetal"). Users write Python code via a web dashboard, schedule it with cron expressions, and the system executes jobs in isolated Docker containers. Targeted at infrastructure automation (e.g., cleansing stale Google Workspace users, rotating GCP/AWS service account keys).
+- **`main.go`** — entry point, flag parsing, dependency wiring
+- **`internal/auth/`** — JWT token generation/validation, bcrypt hashing, middleware (auth.AdminOnly, auth.RequireAuth)
+- **`internal/db/`** — SQLite CRUD for all five models, test helpers (`setupDB`), migrations
+- **`internal/handler/`** — HTTP handlers per resource (job, execution, user, runner, settings, auth, stats)
+- **`internal/model/`** — Go structs matching SQLite schema and JSON request/response types
+- **`internal/notifier/`** — Teams webhook notification for failed jobs
+- **`internal/runner/`** — Docker job executor with 4-goroutine worker pool
+- **`internal/scheduler/`** — Cron scheduler using `robfig/cron/v3`
+- **`internal/server/`** — chi router wiring, route registration, CORS, server lifecycle
+- **`frontend/`** — Vite + React 19 + TypeScript SPA (`src/pages/`, `src/components/`, `src/api.ts`)
+- **`docker/python-runner/`** — Python runner Dockerfile (python:3.12-slim + boto3, google-api-client, bs4)
+- **`deploy/compose.yml`** — Docker Compose deployment for Proxmox LXC
+- **`scripts/`** — utility scripts (SA key rotation, user suspension)
 
-## Tech Stack
+## Architecture Overview
 
-- **Backend**: Go 1.25 (`chi` router, `robfig/cron/v3`, `golang-jwt/v5`, `modernc.org/sqlite`, `golang.org/x/crypto`)
-- **Frontend**: React 19, React Router 7, Tailwind CSS 3, TypeScript 5.5, Vite 8
-- **Deployment**: Docker multi-stage build → Proxmox LXC (via compose), GitHub Actions CI
-- **Python Runner**: `kronize/python-runner` image (Alpine + Python 3 + requests/bs4/psycopg2)
+Kronize is a single Go binary (chi router) serving a React SPA and REST API on `:8080`.
 
-## Architecture
+On startup, the cron scheduler loads all enabled jobs from SQLite and registers them with `robfig/cron/v3`. On each tick, the job is enqueued to a buffered channel consumed by a 4-goroutine worker pool. Each worker writes the job's Python code to a file, executes it via `docker run --rm` using the configured runner image, captures stdout/stderr/exit code/duration, and records the result in the `executions` table. On failure, a Teams webhook notifier fires.
 
-```
-kronize (single Go binary)
-├── HTTP server :8080
-│   ├── Vite static files (SPA frontend)
-│   └── REST API (/api/*)
-├── Cron scheduler (goroutine)
-│   ├── Load enabled jobs from SQLite on start
-│   ├── Register cron expressions with robfig/cron
-│   └── On tick → enqueue job to worker channel
-├── Job runner (worker pool, 4 goroutines)
-│   ├── Read job from channel
-│   ├── Create Execution record in SQLite
-│   ├── docker run --rm with job env vars + script mount
-│   ├── Capture stdout/stderr/exit code/duration
-│   ├── Record results
-│   └── On failure → Teams webhook notification
-└── Cleanup ticker (every 1h)
-    └── DELETE executions WHERE created_at < now - 30d
-```
+A background ticker runs every hour, purging executions older than 30 days.
 
-## API Routes
+### Data Model (SQLite)
 
-All routes under `/api` with JWT auth middleware:
+| Table | Key Columns |
+|-------|-------------|
+| `users` | id, username (UNIQUE), password_hash, role (user\|admin), must_change_password, created_at |
+| `jobs` | id, name, cron_expression, python_code, image, env_vars (JSON), enabled, created_by (FK→users) |
+| `executions` | id, job_id (FK→jobs, CASCADE), status (running\|success\|failed), stdout, stderr, exit_code, duration_ms |
+| `settings` | key (PK), value |
+| `runner_images` | id, name, image, description, created_at |
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | /api/auth/login | Login |
-| POST | /api/auth/logout | Logout |
-| GET | /api/auth/me | Current user |
-| POST | /api/auth/change-password | Change password |
-| GET | /api/jobs | List jobs (?enabled=true) |
-| POST | /api/jobs | Create job |
-| GET | /api/jobs/{id} | Get job |
-| PUT | /api/jobs/{id} | Update job |
-| DELETE | /api/jobs/{id} | Delete job |
-| POST | /api/jobs/{id}/run | Trigger immediate run |
-| PUT | /api/jobs/{id}/toggle | Toggle enabled |
-| GET | /api/jobs/{id}/executions | List executions |
-| GET | /api/executions/{id} | Get execution detail |
-| GET | /api/stats | Dashboard stats |
-| GET | /api/settings | Get settings |
-| PUT | /api/settings | Update settings |
-| GET | /api/runners | List runner images (admin) |
-| POST | /api/runners | Create runner image (admin) |
-| PUT | /api/runners/{id} | Update runner image (admin) |
-| DELETE | /api/runners/{id} | Delete runner image (admin) |
-| GET | /api/users | List users (admin) |
-| POST | /api/users | Create user (admin) |
-| PUT | /api/users/{id}| Update user (admin) |
-| DELETE | /api/users/{id}| Delete user (admin) |
+### API Routes
 
-## Data Model (SQLite)
+All under `/api` with JWT auth middleware. Admin-only routes (users, runners) are gated by `auth.AdminOnly`. See `internal/server/server.go` for the full route table.
 
-### users
-`id`, `username` (UNIQUE), `password_hash`, `role` (user|admin), `must_change_password`, `created_at`
+## Build, Test, and Development Commands
 
-### jobs
-`id`, `name`, `description`, `cron_expression`, `python_code`, `image` (docker image), `env_vars` (JSON object), `log_level`, `enabled`, `created_by` (FK→users), `created_at`, `updated_at`
+All commands from repository root via `make`:
 
-### executions
-`id`, `job_id` (FK→jobs, CASCADE), `status` (running|success|failed), `stdout`, `stderr`, `exit_code`, `duration_ms`, `started_at`, `finished_at`
+| Command | Purpose |
+|---------|---------|
+| `make build` | Build frontend + Go binary |
+| `make dev` | `make build` + run locally with dev-secret |
+| `make dev-api` | Go only (API), use alongside `make dev-ui` for Vite hot-reload |
+| `make dev-ui` | Vite dev server (port 5173, proxies /api to :8080) |
+| `make test` | `go test ./internal/db/ -v` |
+| `make check` | `make test` + `go vet` + TypeScript type-check + frontend build |
+| `make docker-build` | Build python-runner Docker image |
+| `make redeploy` | SSH to Proxmox LXC → `docker compose pull + up -d` |
+| `make clean` | Remove binary, `frontend/dist/`, `data/` |
 
-### settings
-`key` (PK), `value` — stores config like `teams_webhook_url`
+## Coding Style & Naming Conventions
 
-### runner_images
-`id`, `name`, `image`, `description`, `created_at`
+- **Go**: `gofmt` style. Snake_case for filenames (`job_handler.go`). Exported symbols get doc comments. Error handling is explicit — no silent swallows.
+- **TypeScript/React**: PascalCase for components and their files (`JobFormPage.tsx`). camelCase for functions and variables. Tailwind CSS for all styling — no separate CSS modules. Props are typed via interfaces in the same file or `src/types.ts`.
+- **Python runner scripts**: snake_case. Single-file scripts. stdout/stderr captured by runner — no interactive input.
+- Pre-commit hooks handle formatting — do not run formatters manually.
 
-## Frontend Routes
+## Testing Guidelines
 
-| Route | Page | Description |
-|-------|------|-------------|
-| /login | LoginPage | Auth |
-| /change-password | ChangePasswordPage | Force password change |
-| /dashboard | DashboardPage | Stats cards |
-| /jobs | JobListPage | Job table |
-| /jobs/new | JobFormPage | Create job |
-| /jobs/:id | JobDetailPage | Job detail + executions |
-| /jobs/:id/edit | JobFormPage | Edit job |
-| /executions | ExecutionsPage | All executions (aggregated) |
-| /users | UsersPage | User CRUD (admin) |
-| /runners | RunnersPage | Runner image CRUD (admin) |
+- **Go tests** use the standard `testing` package. A `setupDB(t *testing.T)` helper in `internal/db/db_test.go` provisions a temp SQLite database with migrations applied.
+- Run `make test` to execute all tests. New DB queries or model changes should include a corresponding test.
+- Test naming: `Test` prefix + function or feature under test (`TestOpenAndMigrate`, `TestGetEnabledJobs`).
+- Pattern for DB tests: call `setupDB(t)`, execute queries, assert results. Cleanup via `t.Cleanup`.
+- Frontend testing is not yet established in this project.
 
-## Key Components (Frontend)
+## Commit & Pull Request Guidelines
 
-- `Layout` — nav bar, auth guard, route-based nav links (admin gets Users + Runner)
-- `CodeEditor` — styled textarea with macOS-style traffic light dots
-- `CronHelper` — cron input with preset dropdown
-- `EnvVarEditor` — key/value editor with Simple (table) + Advanced (KEY=VALUE text) modes
-- `ExecutionLog` — stdout (green) / stderr (red) display
-- `StatsCards` — 4 stat cards (total jobs, active, success rate, failures)
-- `StatusBadge` — enabled/disabled pill
+- **Prefixes** observed in history: `feat:`, `fix:`, `bump:`, `plan:`, `spec:`, `docs:`.
+- PR descriptions should explain the *what* and *why*, link any design docs or issues, and note migration steps if the schema changes.
+- Tags trigger CI builds: `kronize-v*` builds and pushes the Kronize binary image; `python-runner-v*` builds the runner image. Pushes to `cr.prolifel.com`.
+- Format: `<prefix>: <short description>` — keep the first line under 72 characters.
 
-## Auth Flow
+## Security & Configuration Tips
 
-- JWT tokens, 72h expiry, stored in memory (not localStorage)
-- Credentials: `include` for cookie-based session
-- Admin-only routes gated by `auth.AdminOnly` middleware
-- First-time users forced to change password via `must_change_password` flag
+- **`JWT_SECRET`** and **`ADMIN_PASSWORD`** are required env vars — never hardcode, commit, or log them. The binary falls back to a random JWT secret only if neither flag nor env var is set (logged at startup), which invalidates all sessions on restart.
+- **`ADMIN_PASSWORD`** sets the initial admin password. On first run, the admin user is seeded with `must_change_password = true`, forcing a password change on login. Default is `admin` if unset — change in production.
+- Docker socket (`/var/run/docker.sock`) is bind-mounted at runtime for job container execution. The kronize container needs `DOCKER_GID` matching the host's Docker group ID to avoid permission errors.
+- Tokens expire after 72 hours and are stored in memory (not localStorage) on the frontend — page reload requires re-login.
+- Database file at `/data/kronize.db` inside the container. Mount a persistent volume in production.
+- Job `python_code` is written to disk in `--scripts` directory before execution — ensure that directory is not web-accessible.
 
-## Build & Run
+## Agent-Specific Instructions
 
-```sh
-make build        # frontend build + Go build
-make dev          # build + run with dev-secret
-make dev-api      # Go only (API), for frontend hot-reload
-make dev-ui       # Vite dev server
-make test         # go test ./internal/db/ -v
-make check        # test + vet + frontend build
-make docker-build # python-runner image only
-```
+When modifying this repository as an AI agent:
 
-## Deployment
-
-- Single binary, deployed via `docker compose` on Proxmox LXC
-- Docker socket bind-mounted for job execution (`/var/run/docker.sock`)
-- CI: GitHub Actions builds and pushes on tags `kronize-v*` / `python-runner-v*`
-- Registry: `cr.prolifel.com`
-- Redeploy via `make redeploy` (SSH → pct exec → compose pull + up -d)
-
-## Env Vars
-
-- `JWT_SECRET` — JWT signing secret
-- `ADMIN_PASSWORD` — initial admin password on first run
-- `REGISTRY_URL` — Docker registry
-- `ADDR` — listen address (default :8080)
-
-## File Layout
-
-```
-kronize/
-├── main.go                 # Entry point, flag parsing, init
-├── internal/
-│   ├── auth/               # JWT + bcrypt + middleware
-│   ├── db/                 # SQLite CRUD for all models
-│   ├── handler/            # HTTP handlers (chi)
-│   ├── model/              # Go structs + request/response types
-│   ├── notifier/           # Teams webhook notifier
-│   ├── runner/             # Docker job executor (worker pool)
-│   ├── scheduler/          # Cron scheduler (robfig/cron)
-│   └── server/             # Server wiring, route registration
-├── frontend/
-│   ├── src/
-│   │   ├── pages/          # One page per route
-│   │   ├── components/     # Reusable UI components
-│   │   ├── api.ts          # Typed API client
-│   │   ├── types.ts        # TypeScript interfaces
-│   │   ├── AuthContext.tsx  # Auth state provider
-│   │   └── App.tsx         # Route definitions
-│   └── ...
-├── docker/python-runner/   # Python runner Dockerfile
-├── deploy/compose.yml      # Docker compose deployment
-├── scripts/                # Utility scripts (SA key rotation, user suspension)
-└── Makefile
-```
+- **Read before writing**: Before editing a Go handler or DB query, read the corresponding model struct in `internal/model/` first — response types and DB schema must stay in sync.
+- **Frontend-backend contract**: Any new API endpoint needs entries in three places: handler (`internal/handler/`), route registration (`internal/server/server.go`), and API client (`frontend/src/api.ts`). Missing any one breaks the feature.
+- **SQLite concurrency**: SQLite does not handle concurrent writes well. Batch mutations in transactions and avoid long-held write locks. See `6f61b46` for a previous fix — `database/sql` with `?mode=rw` and `_journal_mode=WAL` can help.
+- **Job execution flow**: Adding pre- or post-execution hooks? Modify `internal/runner/runner.go`. Adding notification channels? Modify `internal/notifier/notifier.go`. Do not mix the two.
+- **Version bumps**: Update the version in `main.go` (via a constant or tag), tag with the appropriate prefix (`kronize-v*` or `python-runner-v*`), and let CI handle the rest. Docker Compose in `deploy/compose.yml` references exact tags — update those too.
+- **Dependencies**: Pin all versions exactly — no `^`, `~`, or `latest`. Go modules are managed via `go.mod`; frontend deps via `package.json`. Check both when adding a dependency.

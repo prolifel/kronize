@@ -93,7 +93,7 @@ func (r *Runner) runJob(job *model.Job) {
 		if reg == "" {
 			image = "kronize/python-runner"
 		} else {
-			image = reg + "/kronize/python-runner:python-runner-v1.0.1"
+			image = reg + "/kronize/python-runner:latest"
 		}
 	}
 	args = append(args, image, "/code/main.py")
