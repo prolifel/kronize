@@ -3,6 +3,7 @@ package scheduler
 import (
 	"database/sql"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -21,10 +22,24 @@ type Scheduler struct {
 	mu      sync.RWMutex
 }
 
+func cronTZ() *time.Location {
+	tz := os.Getenv("TZ")
+	if tz == "" {
+		return time.UTC
+	}
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		log.Printf("invalid TZ %q, falling back to UTC: %v", tz, err)
+		return time.UTC
+	}
+	return loc
+}
+
 func New(database *sql.DB, scriptsDir string) *Scheduler {
+	loc := cronTZ()
 	return &Scheduler{
 		db:      database,
-		cron:    cron.New(cron.WithParser(cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor))),
+		cron:    cron.New(cron.WithLocation(loc), cron.WithParser(cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor))),
 		runner:  runner.New(database, scriptsDir),
 		entries: make(map[int64]cron.EntryID),
 	}
