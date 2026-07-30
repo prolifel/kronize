@@ -12,6 +12,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
       - ADDR=:8080
       - REGISTRY_URL=${REGISTRY_URL:?REGISTRY_URL required}
+      - TZ=${TZ}
     volumes:
       - kronize-data:/data
       - kronize-scripts:/data/scripts
