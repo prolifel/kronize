@@ -1,12 +1,23 @@
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 
 const publicPaths = ['/login']
 
+function formatTime(d: Date): string {
+  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout, isAuthenticated, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   if (loading) return null
 
@@ -55,6 +66,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               ))}
             </div>
             <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500 font-mono">{formatTime(now)}</span>
               <span className="text-sm text-gray-500">{user?.username}</span>
               <button
                 onClick={() => logout().then(() => navigate('/login'))}
