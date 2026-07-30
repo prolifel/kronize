@@ -87,8 +87,9 @@ func CreateJob(database *sql.DB, sched *scheduler.Scheduler, scriptsDir string) 
 			return
 		}
 		sched.AddJob(job)
-		job.EnvVars = ""
-		jsonResponse(w, http.StatusCreated, job)
+		resp := *job
+		resp.EnvVars = ""
+		jsonResponse(w, http.StatusCreated, &resp)
 	}
 }
 
@@ -135,9 +136,10 @@ func UpdateJob(database *sql.DB, sched *scheduler.Scheduler, scriptsDir string) 
 			return
 		}
 		sched.UpdateJob(job)
-		job.PythonCode = ""
-		job.EnvVars = ""
-		jsonResponse(w, http.StatusOK, job)
+		resp := *job
+		resp.PythonCode = ""
+		resp.EnvVars = ""
+		jsonResponse(w, http.StatusOK, &resp)
 	}
 }
 
@@ -214,8 +216,9 @@ func ToggleJob(database *sql.DB, sched *scheduler.Scheduler) http.HandlerFunc {
 		} else {
 			sched.RemoveJob(id)
 		}
-		job.PythonCode = ""
-		job.EnvVars = ""
-		jsonResponse(w, http.StatusOK, job)
+		resp := *job
+		resp.PythonCode = ""
+		resp.EnvVars = ""
+		jsonResponse(w, http.StatusOK, &resp)
 	}
 }
