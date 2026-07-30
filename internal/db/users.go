@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"kronize/internal/model"
 )
@@ -131,6 +131,6 @@ func SeedAdmin(db *sql.DB, passwordHash string) error {
 	if err != nil {
 		return fmt.Errorf("seed admin: %w", err)
 	}
-	log.Println("seeded default admin user (password: admin)")
+	slog.Warn("seeded default admin user (password: admin)")
 	return nil
 }

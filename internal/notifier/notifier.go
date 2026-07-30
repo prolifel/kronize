@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -46,7 +46,7 @@ func SendTeamsNotification(database *sql.DB, job *model.Job, execID int64, stder
 	body, _ := json.Marshal(card)
 	resp, err := http.Post(webhookURL, "application/json", bytes.NewReader(body))
 	if err != nil {
-		log.Printf("failed to send Teams notification: %v", err)
+		slog.Warn("failed to send Teams notification", "error", err)
 		return
 	}
 	resp.Body.Close()

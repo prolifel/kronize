@@ -5,12 +5,14 @@ import (
 	"encoding/hex"
 	"flag"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"kronize/internal/auth"
 	"kronize/internal/db"
+	klog "kronize/internal/log"
 	"kronize/internal/server"
 )
 
@@ -32,7 +34,7 @@ func getJWTSecret(secret string) string {
 	if _, err := rand.Read(b); err != nil {
 		log.Fatalf("failed to generate JWT secret: %v", err)
 	}
-	log.Println("generated random JWT secret")
+	slog.Info("generated random JWT secret")
 	return hex.EncodeToString(b)
 }
 
@@ -42,6 +44,8 @@ func main() {
 	addr := flag.String("addr", getAddr(), "HTTP listen address (overrides ADDR env)")
 	jwtSecret := flag.String("jwt-secret", "", "JWT signing secret (overrides JWT_SECRET env)")
 	flag.Parse()
+
+	klog.Init()
 
 	secret := getJWTSecret(*jwtSecret)
 
@@ -62,7 +66,7 @@ func main() {
 	adminPass := os.Getenv("ADMIN_PASSWORD")
 	if adminPass == "" {
 		adminPass = "admin"
-		log.Println("ADMIN_PASSWORD not set, using default: admin")
+		slog.Warn("ADMIN_PASSWORD not set, using default: admin")
 	}
 	adminHash, err := auth.HashPassword(adminPass)
 	if err != nil {
@@ -79,12 +83,12 @@ func main() {
 		}
 	}()
 
-	log.Printf("kronize running on %s", *addr)
+	slog.Info("kronize running", "addr", *addr)
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
 	<-sig
 
-	log.Println("shutting down...")
+	slog.Info("shutting down...")
 	srv.Scheduler.Stop()
 }

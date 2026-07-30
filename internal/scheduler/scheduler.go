@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
@@ -29,7 +29,7 @@ func cronTZ() *time.Location {
 	}
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
-		log.Printf("invalid TZ %q, falling back to UTC: %v", tz, err)
+		slog.Warn("invalid TZ, falling back to UTC", "tz", tz, "error", err)
 		return time.UTC
 	}
 	return loc
@@ -68,11 +68,11 @@ func (s *Scheduler) AddJob(job *model.Job) {
 		s.runner.ExecuteJob(job)
 	})
 	if err != nil {
-		log.Printf("failed to schedule job %d (%s): %v", job.ID, job.Name, err)
+		slog.Error("failed to schedule job", "job_id", job.ID, "name", job.Name, "error", err)
 		return
 	}
 	s.entries[job.ID] = eid
-	log.Printf("scheduled job %d (%s): %s", job.ID, job.Name, job.CronExpression)
+	slog.Info("scheduled job", "job_id", job.ID, "name", job.Name, "cron", job.CronExpression)
 }
 
 func (s *Scheduler) UpdateJob(job *model.Job) {
@@ -87,7 +87,7 @@ func (s *Scheduler) UpdateJob(job *model.Job) {
 			s.runner.ExecuteJob(job)
 		})
 		if err != nil {
-			log.Printf("failed to update job %d (%s): %v", job.ID, job.Name, err)
+			slog.Error("failed to update job", "job_id", job.ID, "name", job.Name, "error", err)
 			return
 		}
 		s.entries[job.ID] = eid
@@ -113,9 +113,9 @@ func (s *Scheduler) cleanupLoop() {
 	for range ticker.C {
 		n, err := db.DeleteOldExecutions(s.db, 30)
 		if err != nil {
-			log.Printf("cleanup error: %v", err)
+			slog.Error("cleanup error", "error", err)
 		} else if n > 0 {
-			log.Printf("cleaned up %d old executions", n)
+			slog.Info("cleaned up old executions", "count", n)
 		}
 	}
 }

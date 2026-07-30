@@ -2,7 +2,7 @@ package server
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -46,7 +46,6 @@ func (s *Server) Start() error {
 	go s.Scheduler.Start()
 
 	r := chi.NewRouter()
-	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 
 	r.Route("/api", func(r chi.Router) {
@@ -101,9 +100,9 @@ func (s *Server) Start() error {
 			fileServer.ServeHTTP(w, r)
 		})
 	} else {
-		log.Println("frontend/dist not found, API only mode")
+		slog.Info("frontend dist not found, API only mode")
 	}
 
-	log.Printf("listening on %s", s.Addr)
+	slog.Info("listening", "addr", s.Addr)
 	return http.ListenAndServe(s.Addr, r)
 }
