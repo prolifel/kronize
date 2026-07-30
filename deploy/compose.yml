@@ -1,6 +1,6 @@
 services:
   kronize:
-    image: ${REGISTRY_URL}/kronize/kronize:kronize-v1.0.11
+    image: ${REGISTRY_URL}/kronize/kronize:kronize-v1.0.12
     container_name: kronize
     restart: unless-stopped
     networks:
@@ -13,6 +13,7 @@ services:
       - ADDR=:8080
       - REGISTRY_URL=${REGISTRY_URL:?REGISTRY_URL required}
       - TZ=${TZ}
+      - LOG_LEVEL=${LOG_LEVEL}
     volumes:
       - kronize-data:/data
       - kronize-scripts:/data/scripts
