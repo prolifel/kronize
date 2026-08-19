@@ -28,7 +28,7 @@ const schemaJobs = `CREATE TABLE IF NOT EXISTS jobs (
 	python_code TEXT NOT NULL,
 	image_id INTEGER NOT NULL REFERENCES runner_images(id),
 	env_vars TEXT DEFAULT '{}',
-	token_file TEXT DEFAULT '',
+	host_mappings TEXT DEFAULT '[]',
 	log_level TEXT DEFAULT 'info',
 	enabled BOOLEAN DEFAULT 1,
 	created_by INTEGER REFERENCES users(id),
@@ -93,13 +93,23 @@ func Migrate(db *sql.DB) error {
 		}
 	}
 
+	var hasHostMappings int
+	if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('jobs') WHERE name = 'host_mappings'").Scan(&hasHostMappings); err != nil {
+		return fmt.Errorf("migrate check jobs host_mappings: %w", err)
+	}
+	if hasHostMappings == 0 {
+		if _, err := db.Exec("ALTER TABLE jobs ADD COLUMN host_mappings TEXT DEFAULT '[]'"); err != nil {
+			return fmt.Errorf("migrate add jobs host_mappings: %w", err)
+		}
+	}
+
 	var hasTokenFile int
 	if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('jobs') WHERE name = 'token_file'").Scan(&hasTokenFile); err != nil {
 		return fmt.Errorf("migrate check jobs token_file: %w", err)
 	}
-	if hasTokenFile == 0 {
-		if _, err := db.Exec("ALTER TABLE jobs ADD COLUMN token_file TEXT DEFAULT ''"); err != nil {
-			return fmt.Errorf("migrate add jobs token_file: %w", err)
+	if hasTokenFile > 0 {
+		if _, err := db.Exec("ALTER TABLE jobs DROP COLUMN token_file"); err != nil {
+			return fmt.Errorf("migrate drop jobs token_file: %w", err)
 		}
 	}
 

@@ -291,42 +291,43 @@ func TestJobCreatedByUsername(t *testing.T) {
 	}
 }
 
-func TestJobTokenFile(t *testing.T) {
+func TestJobHostMappings(t *testing.T) {
 	d := setupDB(t)
 
-	user, err := CreateUser(d, model.CreateUserRequest{Username: "tokenuser"}, "hash")
+	user, err := CreateUser(d, model.CreateUserRequest{Username: "mapuser"}, "hash")
 	if err != nil {
 		t.Fatalf("CreateUser() error = %v", err)
 	}
 	imageID := seedRunnerImage(t, d)
 
+	mappings := `[{"host":"/Users/clement/.cspm_msal_token.json","container":"/root/.cspm_msal_token.json","read_only":true}]`
 	j, err := CreateJob(d, model.CreateJobRequest{
-		Name:           "token-job",
+		Name:           "map-job",
 		CronExpression: "0 * * * *",
 		ImageID:        imageID,
-		TokenFile:      "/Users/clement/.cspm_msal_token.json",
+		HostMappings:   mappings,
 	}, user.ID)
 	if err != nil {
 		t.Fatalf("CreateJob() error = %v", err)
 	}
-	if j.TokenFile != "/Users/clement/.cspm_msal_token.json" {
-		t.Errorf("CreateJob() TokenFile = %q, want %q", j.TokenFile, "/Users/clement/.cspm_msal_token.json")
+	if j.HostMappings != mappings {
+		t.Errorf("CreateJob() HostMappings = %q, want %q", j.HostMappings, mappings)
 	}
 
 	jobs, err := ListJobs(d, false, 0, "admin")
 	if err != nil {
 		t.Fatalf("ListJobs() error = %v", err)
 	}
-	if len(jobs) != 1 || jobs[0].TokenFile != "/Users/clement/.cspm_msal_token.json" {
-		t.Errorf("ListJobs() TokenFile = %q, want %q", jobs[0].TokenFile, "/Users/clement/.cspm_msal_token.json")
+	if len(jobs) != 1 || jobs[0].HostMappings != mappings {
+		t.Errorf("ListJobs() HostMappings = %q, want %q", jobs[0].HostMappings, mappings)
 	}
 
 	empty := ""
-	updated, err := UpdateJob(d, j.ID, model.UpdateJobRequest{TokenFile: &empty})
+	updated, err := UpdateJob(d, j.ID, model.UpdateJobRequest{HostMappings: &empty})
 	if err != nil {
 		t.Fatalf("UpdateJob() error = %v", err)
 	}
-	if updated.TokenFile != "" {
-		t.Errorf("UpdateJob() TokenFile = %q, want empty", updated.TokenFile)
+	if updated.HostMappings != "" {
+		t.Errorf("UpdateJob() HostMappings = %q, want empty", updated.HostMappings)
 	}
 }

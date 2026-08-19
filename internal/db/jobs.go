@@ -6,7 +6,7 @@ import (
 	"kronize/internal/model"
 )
 
-const jobCols = "j.id, j.name, j.description, j.cron_expression, j.python_code, j.image_id, ri.image AS image, j.env_vars, j.token_file, j.log_level, j.enabled, j.created_by, COALESCE(u.username, '') AS created_by_username, j.created_at, j.updated_at"
+const jobCols = "j.id, j.name, j.description, j.cron_expression, j.python_code, j.image_id, ri.image AS image, j.env_vars, j.host_mappings, j.log_level, j.enabled, j.created_by, COALESCE(u.username, '') AS created_by_username, j.created_at, j.updated_at"
 const jobFrom = "FROM jobs j JOIN runner_images ri ON ri.id = j.image_id LEFT JOIN users u ON u.id = j.created_by"
 
 func CreateJob(db *sql.DB, req model.CreateJobRequest, userID int64) (*model.Job, error) {
@@ -19,9 +19,9 @@ func CreateJob(db *sql.DB, req model.CreateJobRequest, userID int64) (*model.Job
 		envVars = "{}"
 	}
 	res, err := db.Exec(
-		`INSERT INTO jobs (name, description, cron_expression, python_code, image_id, env_vars, token_file, log_level, created_by)
+		`INSERT INTO jobs (name, description, cron_expression, python_code, image_id, env_vars, host_mappings, log_level, created_by)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		req.Name, req.Description, req.CronExpression, req.PythonCode, req.ImageID, envVars, req.TokenFile, logLevel, userID,
+		req.Name, req.Description, req.CronExpression, req.PythonCode, req.ImageID, envVars, req.HostMappings, logLevel, userID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create job: %w", err)
@@ -36,7 +36,7 @@ func GetJobByID(db *sql.DB, id int64) (*model.Job, error) {
 	)
 	j := &model.Job{}
 	err := row.Scan(&j.ID, &j.Name, &j.Description, &j.CronExpression, &j.PythonCode,
-		&j.ImageID, &j.Image, &j.EnvVars, &j.TokenFile, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedByUsername, &j.CreatedAt, &j.UpdatedAt)
+		&j.ImageID, &j.Image, &j.EnvVars, &j.HostMappings, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedByUsername, &j.CreatedAt, &j.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("get job: %w", err)
 	}
@@ -76,7 +76,7 @@ func ListJobs(db *sql.DB, enabledOnly bool, userID int64, role string) ([]*model
 	for rows.Next() {
 		j := &model.Job{}
 		if err := rows.Scan(&j.ID, &j.Name, &j.Description, &j.CronExpression, &j.PythonCode,
-			&j.ImageID, &j.Image, &j.EnvVars, &j.TokenFile, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedByUsername, &j.CreatedAt, &j.UpdatedAt); err != nil {
+			&j.ImageID, &j.Image, &j.EnvVars, &j.HostMappings, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedByUsername, &j.CreatedAt, &j.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan job: %w", err)
 		}
 		jobs = append(jobs, j)
@@ -108,9 +108,9 @@ func UpdateJob(db *sql.DB, id int64, req model.UpdateJobRequest) (*model.Job, er
 		fields = append(fields, "env_vars = ?")
 		args = append(args, *req.EnvVars)
 	}
-	if req.TokenFile != nil {
-		fields = append(fields, "token_file = ?")
-		args = append(args, *req.TokenFile)
+	if req.HostMappings != nil {
+		fields = append(fields, "host_mappings = ?")
+		args = append(args, *req.HostMappings)
 	}
 	if req.LogLevel != nil {
 		fields = append(fields, "log_level = ?")
