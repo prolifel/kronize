@@ -1,16 +1,15 @@
-# Show Job Creator Username
+# Job "Created By" Column on List Page
 
 **Date:** 2026-08-03 (updated 2026-08-19)
 **Status:** Approved (design)
 
 ## Goal
 
-Display the job creator's username instead of the raw `created_by` user ID — on the job detail page and as a "Created By" column in the job list page.
+Display the job creator's username instead of the raw `created_by` user ID as a "Created By" column in the job list page.
 
 ## Requirements
 
 - API returns creator username alongside existing job data.
-- Job detail page shows "Created by <username>" in the info card.
 - Job list page shows a "Created By" column with the creator username.
 - Existing jobs stay visible if the creator user is deleted (username falls back to empty; list page renders `-`).
 
@@ -25,8 +24,7 @@ Display the job creator's username instead of the raw `created_by` user ID — o
 ### Frontend
 
 1. Add `created_by_username: string` to `Job` in `frontend/src/types.ts`.
-2. In `frontend/src/pages/JobDetailPage.tsx` info card, add third `dl` entry: `Created by` → `{job.created_by_username}`.
-3. In `frontend/src/pages/JobListPage.tsx` table, add `Created By` column after Status: `{job.created_by_username || '-'}`.
+2. In `frontend/src/pages/JobListPage.tsx` table, add `Created By` column after Status: `{job.created_by_username || '-'}`.
 
 ## Verification
 
@@ -36,3 +34,4 @@ Display the job creator's username instead of the raw `created_by` user ID — o
 ## Out of Scope
 
 - Permission changes — `canAccessJob` logic untouched.
+- Job detail page rendering of the new field (can be added later; field available in API).
