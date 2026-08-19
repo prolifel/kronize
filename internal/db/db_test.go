@@ -290,3 +290,43 @@ func TestJobCreatedByUsername(t *testing.T) {
 		t.Errorf("ListJobs() CreatedByUsername = %q, want %q", jobs[0].CreatedByUsername, "creator")
 	}
 }
+
+func TestJobTokenFile(t *testing.T) {
+	d := setupDB(t)
+
+	user, err := CreateUser(d, model.CreateUserRequest{Username: "tokenuser"}, "hash")
+	if err != nil {
+		t.Fatalf("CreateUser() error = %v", err)
+	}
+	imageID := seedRunnerImage(t, d)
+
+	j, err := CreateJob(d, model.CreateJobRequest{
+		Name:           "token-job",
+		CronExpression: "0 * * * *",
+		ImageID:        imageID,
+		TokenFile:      "/Users/clement/.cspm_msal_token.json",
+	}, user.ID)
+	if err != nil {
+		t.Fatalf("CreateJob() error = %v", err)
+	}
+	if j.TokenFile != "/Users/clement/.cspm_msal_token.json" {
+		t.Errorf("CreateJob() TokenFile = %q, want %q", j.TokenFile, "/Users/clement/.cspm_msal_token.json")
+	}
+
+	jobs, err := ListJobs(d, false, 0, "admin")
+	if err != nil {
+		t.Fatalf("ListJobs() error = %v", err)
+	}
+	if len(jobs) != 1 || jobs[0].TokenFile != "/Users/clement/.cspm_msal_token.json" {
+		t.Errorf("ListJobs() TokenFile = %q, want %q", jobs[0].TokenFile, "/Users/clement/.cspm_msal_token.json")
+	}
+
+	empty := ""
+	updated, err := UpdateJob(d, j.ID, model.UpdateJobRequest{TokenFile: &empty})
+	if err != nil {
+		t.Fatalf("UpdateJob() error = %v", err)
+	}
+	if updated.TokenFile != "" {
+		t.Errorf("UpdateJob() TokenFile = %q, want empty", updated.TokenFile)
+	}
+}

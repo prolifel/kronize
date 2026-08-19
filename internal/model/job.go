@@ -11,6 +11,7 @@ type Job struct {
 	ImageID        int64     `json:"image_id"`
 	Image          string    `json:"image"`
 	EnvVars        string    `json:"env_vars,omitempty"`
+	TokenFile      string    `json:"token_file"`
 	LogLevel       string    `json:"log_level"`
 	Enabled        bool      `json:"enabled"`
 	CreatedBy      int64     `json:"created_by"`
@@ -25,6 +26,7 @@ type CreateJobRequest struct {
 	CronExpression string `json:"cron_expression"`
 	PythonCode     string `json:"python_code"`
 	EnvVars        string `json:"env_vars"`
+	TokenFile      string `json:"token_file"`
 	LogLevel       string `json:"log_level"`
 	ImageID        int64  `json:"image_id"`
 }
@@ -35,6 +37,7 @@ type UpdateJobRequest struct {
 	CronExpression *string `json:"cron_expression"`
 	PythonCode     *string `json:"python_code"`
 	EnvVars        *string `json:"env_vars"`
+	TokenFile      *string `json:"token_file"`
 	LogLevel       *string `json:"log_level"`
 	Enabled        *bool   `json:"enabled"`
 	ImageID        *int64  `json:"image_id"`
