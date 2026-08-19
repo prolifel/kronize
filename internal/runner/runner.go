@@ -69,6 +69,10 @@ func (r *Runner) runJob(job *model.Job) {
 		}
 	}
 
+	if job.TokenFile != "" {
+		args = append(args, "-v", job.TokenFile+":/root/.cspm_msal_token.json:ro")
+	}
+
 	image := job.Image
 	if image == "" {
 		reg := os.Getenv("REGISTRY_URL")

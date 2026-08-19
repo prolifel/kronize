@@ -15,6 +15,7 @@ export interface Job {
   image_id: number
   image: string
   env_vars: string
+  token_file: string
   log_level: string
   enabled: boolean
   created_by: number
@@ -29,6 +30,7 @@ export interface JobFormData {
   cron_expression: string
   python_code: string
   env_vars: string
+  token_file: string
   log_level: string
   image_id: number
 }
