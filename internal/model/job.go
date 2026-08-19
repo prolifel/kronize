@@ -14,6 +14,7 @@ type Job struct {
 	LogLevel       string    `json:"log_level"`
 	Enabled        bool      `json:"enabled"`
 	CreatedBy      int64     `json:"created_by"`
+	CreatedByUsername string  `json:"created_by_username"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }

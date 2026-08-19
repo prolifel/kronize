@@ -6,8 +6,8 @@ import (
 	"kronize/internal/model"
 )
 
-const jobCols = "j.id, j.name, j.description, j.cron_expression, j.python_code, j.image_id, ri.image AS image, j.env_vars, j.log_level, j.enabled, j.created_by, j.created_at, j.updated_at"
-const jobFrom = "FROM jobs j JOIN runner_images ri ON ri.id = j.image_id"
+const jobCols = "j.id, j.name, j.description, j.cron_expression, j.python_code, j.image_id, ri.image AS image, j.env_vars, j.log_level, j.enabled, j.created_by, COALESCE(u.username, '') AS created_by_username, j.created_at, j.updated_at"
+const jobFrom = "FROM jobs j JOIN runner_images ri ON ri.id = j.image_id LEFT JOIN users u ON u.id = j.created_by"
 
 func CreateJob(db *sql.DB, req model.CreateJobRequest, userID int64) (*model.Job, error) {
 	logLevel := req.LogLevel
@@ -36,7 +36,7 @@ func GetJobByID(db *sql.DB, id int64) (*model.Job, error) {
 	)
 	j := &model.Job{}
 	err := row.Scan(&j.ID, &j.Name, &j.Description, &j.CronExpression, &j.PythonCode,
-		&j.ImageID, &j.Image, &j.EnvVars, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedAt, &j.UpdatedAt)
+		&j.ImageID, &j.Image, &j.EnvVars, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedByUsername, &j.CreatedAt, &j.UpdatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("get job: %w", err)
 	}
@@ -76,7 +76,7 @@ func ListJobs(db *sql.DB, enabledOnly bool, userID int64, role string) ([]*model
 	for rows.Next() {
 		j := &model.Job{}
 		if err := rows.Scan(&j.ID, &j.Name, &j.Description, &j.CronExpression, &j.PythonCode,
-			&j.ImageID, &j.Image, &j.EnvVars, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedAt, &j.UpdatedAt); err != nil {
+			&j.ImageID, &j.Image, &j.EnvVars, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedByUsername, &j.CreatedAt, &j.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan job: %w", err)
 		}
 		jobs = append(jobs, j)

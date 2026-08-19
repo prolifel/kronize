@@ -257,3 +257,36 @@ func TestSettings(t *testing.T) {
 		t.Errorf("expected 1 setting, got %d", len(all))
 	}
 }
+
+func TestJobCreatedByUsername(t *testing.T) {
+	d := setupDB(t)
+
+	user, err := CreateUser(d, model.CreateUserRequest{Username: "creator"}, "hash")
+	if err != nil {
+		t.Fatalf("CreateUser() error = %v", err)
+	}
+	imageID := seedRunnerImage(t, d)
+
+	j, err := CreateJob(d, model.CreateJobRequest{
+		Name:           "creator-job",
+		CronExpression: "0 * * * *",
+		ImageID:        imageID,
+	}, user.ID)
+	if err != nil {
+		t.Fatalf("CreateJob() error = %v", err)
+	}
+	if j.CreatedByUsername != "creator" {
+		t.Errorf("CreateJob() CreatedByUsername = %q, want %q", j.CreatedByUsername, "creator")
+	}
+
+	jobs, err := ListJobs(d, false, 0, "admin")
+	if err != nil {
+		t.Fatalf("ListJobs() error = %v", err)
+	}
+	if len(jobs) != 1 {
+		t.Fatalf("expected 1 job, got %d", len(jobs))
+	}
+	if jobs[0].CreatedByUsername != "creator" {
+		t.Errorf("ListJobs() CreatedByUsername = %q, want %q", jobs[0].CreatedByUsername, "creator")
+	}
+}
