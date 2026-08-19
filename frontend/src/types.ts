@@ -18,6 +18,7 @@ export interface Job {
   log_level: string
   enabled: boolean
   created_by: number
+  created_by_username: string
   created_at: string
   updated_at: string
 }

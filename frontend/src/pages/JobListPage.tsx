@@ -60,6 +60,7 @@ export default function JobListPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Schedule</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created By</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
@@ -74,6 +75,7 @@ export default function JobListPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 font-mono">{job.cron_expression}</td>
                   <td className="px-6 py-4"><StatusBadge enabled={job.enabled} /></td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{job.created_by_username || '-'}</td>
                   <td className="px-6 py-4 text-right text-sm space-x-2" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => handleToggle(job.id)}
