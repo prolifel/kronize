@@ -1,10 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { api } from '../api'
 import StatusBadge from '../components/StatusBadge'
 import ExecutionLog from '../components/ExecutionLog'
 import type { Job, Execution } from '../types'
 import { useAuth } from '../AuthContext'
+
+interface LiveLog {
+  id: number
+  stdout: string
+  stderr: string
+  status: 'running' | 'success' | 'failed'
+  exit_code: number | null
+  duration_ms: number | null
+}
 
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -13,8 +22,10 @@ export default function JobDetailPage() {
   const [executions, setExecutions] = useState<Execution[]>([])
   const [expandedExec, setExpandedExec] = useState<number | null>(null)
   const [expandedDetail, setExpandedDetail] = useState<Execution | null>(null)
+  const [liveLog, setLiveLog] = useState<LiveLog | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const eventSourceRef = useRef<EventSource | null>(null)
 
   const load = () => {
     if (!id) return
@@ -25,13 +36,81 @@ export default function JobDetailPage() {
 
   useEffect(load, [id])
 
+  const closeStream = () => {
+    eventSourceRef.current?.close()
+    eventSourceRef.current = null
+  }
+
+  const openStream = (execId: number) => {
+    closeStream()
+    setLiveLog({
+      id: execId,
+      stdout: '',
+      stderr: '',
+      status: 'running',
+      exit_code: null,
+      duration_ms: null,
+    })
+
+    const es = new EventSource(`/api/executions/${execId}/stream`)
+    eventSourceRef.current = es
+
+    es.addEventListener('init', (event) => {
+      const data = JSON.parse((event as MessageEvent).data)
+      setLiveLog((prev) => prev?.id === execId ? {
+        ...prev,
+        stdout: data.stdout,
+        stderr: data.stderr,
+        status: data.status,
+        exit_code: data.exit_code,
+        duration_ms: data.duration_ms,
+      } : prev)
+      if (data.status !== 'running') {
+        closeStream()
+        load()
+      }
+    })
+
+    es.addEventListener('stdout', (event) => {
+      const data = JSON.parse((event as MessageEvent).data)
+      setLiveLog((prev) => prev?.id === execId ? { ...prev, stdout: prev.stdout + data } : prev)
+    })
+
+    es.addEventListener('stderr', (event) => {
+      const data = JSON.parse((event as MessageEvent).data)
+      setLiveLog((prev) => prev?.id === execId ? { ...prev, stderr: prev.stderr + data } : prev)
+    })
+
+    es.addEventListener('status', (event) => {
+      const data = JSON.parse((event as MessageEvent).data)
+      setLiveLog((prev) => prev?.id === execId ? {
+        ...prev,
+        status: data.status,
+        exit_code: data.exit_code,
+        duration_ms: data.duration_ms,
+      } : prev)
+      closeStream()
+      load()
+    })
+
+    es.onerror = () => {
+      closeStream()
+      load()
+    }
+  }
+
+  useEffect(() => () => closeStream(), [])
+
   const handleRun = async () => {
     if (!id) return
     try {
-      await api.runJob(Number(id))
+      const result = await api.runJob(Number(id))
       setSuccess('Job triggered successfully')
       setTimeout(() => setSuccess(''), 3000)
-      setTimeout(load, 2000)
+      setExpandedExec(result.execution_id)
+      setExpandedDetail(null)
+      openStream(result.execution_id)
+      load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to trigger')
     }
@@ -47,15 +126,23 @@ export default function JobDetailPage() {
     }
   }
 
-  const toggleExecution = async (execId: number) => {
-    if (expandedExec === execId) {
+  const toggleExecution = async (exec: Execution) => {
+    if (expandedExec === exec.id) {
       setExpandedExec(null)
       setExpandedDetail(null)
+      closeStream()
       return
     }
-    setExpandedExec(execId)
+    setExpandedExec(exec.id)
+    if (exec.status === 'running' && exec.source === 'manual') {
+      setExpandedDetail(null)
+      openStream(exec.id)
+      return
+    }
+    closeStream()
+    setLiveLog(null)
     try {
-      const detail = await api.getExecution(execId)
+      const detail = await api.getExecution(exec.id)
       setExpandedDetail(detail)
     } catch {
       setExpandedDetail(null)
@@ -127,7 +214,7 @@ export default function JobDetailPage() {
                 <>
                   <tr
                     key={exec.id}
-                    onClick={() => toggleExecution(exec.id)}
+                    onClick={() => toggleExecution(exec)}
                     className="hover:bg-gray-50 cursor-pointer"
                   >
                     <td className="px-6 py-4">
@@ -149,7 +236,20 @@ export default function JobDetailPage() {
                       {new Date(exec.started_at).toLocaleString()}
                     </td>
                   </tr>
-                  {expandedExec === exec.id && expandedDetail && (
+                  {expandedExec === exec.id && (liveLog?.id === exec.id ? (
+                    <tr key={`${exec.id}-live`}>
+                      <td colSpan={3} className="px-6 py-4 bg-gray-50">
+                        <ExecutionLog stdout={liveLog.stdout} stderr={liveLog.stderr} />
+                        {liveLog.status === 'running' ? (
+                          <p className="text-sm text-gray-500 mt-2">Running...</p>
+                        ) : (
+                          <p className="text-sm text-gray-500 mt-2">
+                            Exit code: {liveLog.exit_code ?? '-'} | {liveLog.duration_ms ?? '-'}ms
+                          </p>
+                        )}
+                      </td>
+                    </tr>
+                  ) : expandedDetail && (
                     <tr key={`${exec.id}-detail`}>
                       <td colSpan={3} className="px-6 py-4 bg-gray-50">
                         <ExecutionLog stdout={expandedDetail.stdout} stderr={expandedDetail.stderr} />
@@ -158,7 +258,7 @@ export default function JobDetailPage() {
                         )}
                       </td>
                     </tr>
-                  )}
+                  ))}
                 </>
               ))}
             </tbody>
