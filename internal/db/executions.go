@@ -66,6 +66,24 @@ func ListExecutionsByJob(db *sql.DB, jobID int64, limit, offset int) ([]*model.E
 	return execs, nil
 }
 
+func AppendExecutionOutput(db *sql.DB, id int64, stream, chunk string) error {
+	if chunk == "" {
+		return nil
+	}
+	var column string
+	switch stream {
+	case "stdout":
+		column = "stdout"
+	case "stderr":
+		column = "stderr"
+	default:
+		return fmt.Errorf("invalid stream %q", stream)
+	}
+	query := fmt.Sprintf("UPDATE executions SET %s = %s || ? WHERE id = ?", column, column)
+	_, err := db.Exec(query, chunk, id)
+	return err
+}
+
 func DeleteOldExecutions(db *sql.DB, olderThanDays int) (int64, error) {
 	res, err := db.Exec(
 		"DELETE FROM executions WHERE started_at < datetime('now', ?)",

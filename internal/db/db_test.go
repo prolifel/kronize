@@ -229,6 +229,51 @@ func TestCreateAndCompleteExecution(t *testing.T) {
 	}
 }
 
+func TestAppendExecutionOutput(t *testing.T) {
+	d := setupDB(t)
+
+	user, err := CreateUser(d, model.CreateUserRequest{Username: "appendtest"}, "hash")
+	if err != nil {
+		t.Fatal(err)
+	}
+	imageID := seedRunnerImage(t, d)
+	req := model.CreateJobRequest{
+		Name:           "append-exec",
+		CronExpression: "0 * * * *",
+		PythonCode:     "print('x')",
+		ImageID:        imageID,
+	}
+	j, err := CreateJob(d, req, user.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, err := CreateExecution(d, j.ID, "manual")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := AppendExecutionOutput(d, e.ID, "stdout", "hello "); err != nil {
+		t.Fatal(err)
+	}
+	if err := AppendExecutionOutput(d, e.ID, "stdout", "world"); err != nil {
+		t.Fatal(err)
+	}
+	if err := AppendExecutionOutput(d, e.ID, "stderr", "bad"); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := GetExecution(d, e.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Stdout != "hello world" {
+		t.Errorf("stdout = %q, want %q", got.Stdout, "hello world")
+	}
+	if got.Stderr != "bad" {
+		t.Errorf("stderr = %q, want %q", got.Stderr, "bad")
+	}
+}
+
 func TestSettings(t *testing.T) {
 	d := setupDB(t)
 
