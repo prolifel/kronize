@@ -4,6 +4,7 @@ import { api } from '../api'
 import CodeEditor from '../components/CodeEditor'
 import CronHelper from '../components/CronHelper'
 import EnvVarEditor from '../components/EnvVarEditor'
+import HostMappingsEditor from '../components/HostMappingsEditor'
 import type { JobFormData, RunnerImage } from '../types'
 
 export default function JobFormPage() {
@@ -17,7 +18,7 @@ export default function JobFormPage() {
     cron_expression: '',
     python_code: 'print("Hello from Kronize!")',
     env_vars: '{}',
-    token_file: '',
+    host_mappings: '[]',
     log_level: 'info',
     image_id: 0,
   })
@@ -38,7 +39,7 @@ export default function JobFormPage() {
           cron_expression: job.cron_expression,
           python_code: job.python_code || '',
           env_vars: job.env_vars || '{}',
-          token_file: job.token_file || '',
+          host_mappings: job.host_mappings || '[]',
           log_level: job.log_level,
           image_id: job.image_id,
         })
@@ -147,17 +148,10 @@ export default function JobFormPage() {
           onChange={(v) => setForm({ ...form, env_vars: v })}
         />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Token file (host path)</label>
-          <input
-            type="text"
-            value={form.token_file}
-            onChange={(e) => setForm({ ...form, token_file: e.target.value })}
-            placeholder="/Users/you/.cspm_msal_token.json"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-          />
-          <p className="text-xs text-gray-500 mt-1">Optional. Mounted read-only into the container at /root/.cspm_msal_token.json.</p>
-        </div>
+        <HostMappingsEditor
+          value={form.host_mappings}
+          onChange={(v) => setForm({ ...form, host_mappings: v })}
+        />
 
         <div className="flex justify-end gap-3">
           <button
