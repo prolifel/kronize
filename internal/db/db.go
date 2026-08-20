@@ -58,7 +58,8 @@ func Migrate(db *sql.DB) error {
 		exit_code INTEGER,
 		duration_ms INTEGER,
 		started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		finished_at TIMESTAMP
+		finished_at TIMESTAMP,
+		source TEXT NOT NULL DEFAULT 'scheduled'
 	);
 
 	CREATE TABLE IF NOT EXISTS settings (
@@ -110,6 +111,16 @@ func Migrate(db *sql.DB) error {
 	if hasTokenFile > 0 {
 		if _, err := db.Exec("ALTER TABLE jobs DROP COLUMN token_file"); err != nil {
 			return fmt.Errorf("migrate drop jobs token_file: %w", err)
+		}
+	}
+
+	var hasSource int
+	if err := db.QueryRow("SELECT COUNT(*) FROM pragma_table_info('executions') WHERE name = 'source'").Scan(&hasSource); err != nil {
+		return fmt.Errorf("migrate check executions source: %w", err)
+	}
+	if hasSource == 0 {
+		if _, err := db.Exec("ALTER TABLE executions ADD COLUMN source TEXT NOT NULL DEFAULT 'scheduled'"); err != nil {
+			return fmt.Errorf("migrate add executions source: %w", err)
 		}
 	}
 

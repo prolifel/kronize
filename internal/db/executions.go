@@ -6,10 +6,15 @@ import (
 	"kronize/internal/model"
 )
 
-func CreateExecution(db *sql.DB, jobID int64) (*model.Execution, error) {
+const executionCols = "id, job_id, status, stdout, stderr, exit_code, duration_ms, started_at, finished_at, source"
+
+func CreateExecution(db *sql.DB, jobID int64, source string) (*model.Execution, error) {
+	if source == "" {
+		source = "scheduled"
+	}
 	res, err := db.Exec(
-		"INSERT INTO executions (job_id, status) VALUES (?, 'running')",
-		jobID,
+		"INSERT INTO executions (job_id, status, source) VALUES (?, 'running', ?)",
+		jobID, source,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create execution: %w", err)
@@ -21,9 +26,9 @@ func CreateExecution(db *sql.DB, jobID int64) (*model.Execution, error) {
 func GetExecution(db *sql.DB, id int64) (*model.Execution, error) {
 	e := &model.Execution{}
 	err := db.QueryRow(
-		`SELECT id, job_id, status, stdout, stderr, exit_code, duration_ms, started_at, finished_at
+		`SELECT `+executionCols+`
 		 FROM executions WHERE id = ?`, id,
-	).Scan(&e.ID, &e.JobID, &e.Status, &e.Stdout, &e.Stderr, &e.ExitCode, &e.DurationMs, &e.StartedAt, &e.FinishedAt)
+	).Scan(&e.ID, &e.JobID, &e.Status, &e.Stdout, &e.Stderr, &e.ExitCode, &e.DurationMs, &e.StartedAt, &e.FinishedAt, &e.Source)
 	if err != nil {
 		return nil, fmt.Errorf("get execution: %w", err)
 	}
@@ -41,7 +46,7 @@ func CompleteExecution(db *sql.DB, id int64, status string, stdout, stderr strin
 
 func ListExecutionsByJob(db *sql.DB, jobID int64, limit, offset int) ([]*model.Execution, error) {
 	rows, err := db.Query(
-		`SELECT id, job_id, status, stdout, stderr, exit_code, duration_ms, started_at, finished_at
+		`SELECT `+executionCols+`
 		 FROM executions WHERE job_id = ? ORDER BY started_at DESC LIMIT ? OFFSET ?`,
 		jobID, limit, offset,
 	)
@@ -53,7 +58,7 @@ func ListExecutionsByJob(db *sql.DB, jobID int64, limit, offset int) ([]*model.E
 	var execs []*model.Execution
 	for rows.Next() {
 		e := &model.Execution{}
-		if err := rows.Scan(&e.ID, &e.JobID, &e.Status, &e.Stdout, &e.Stderr, &e.ExitCode, &e.DurationMs, &e.StartedAt, &e.FinishedAt); err != nil {
+		if err := rows.Scan(&e.ID, &e.JobID, &e.Status, &e.Stdout, &e.Stderr, &e.ExitCode, &e.DurationMs, &e.StartedAt, &e.FinishedAt, &e.Source); err != nil {
 			return nil, fmt.Errorf("scan execution: %w", err)
 		}
 		execs = append(execs, e)

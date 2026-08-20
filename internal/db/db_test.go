@@ -193,12 +193,15 @@ func TestCreateAndCompleteExecution(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	e, err := CreateExecution(d, j.ID)
+	e, err := CreateExecution(d, j.ID, "manual")
 	if err != nil {
 		t.Fatalf("CreateExecution() error = %v", err)
 	}
 	if e.Status != "running" {
 		t.Errorf("status = %q, want %q", e.Status, "running")
+	}
+	if e.Source != "manual" {
+		t.Errorf("source = %q, want %q", e.Source, "manual")
 	}
 
 	err = CompleteExecution(d, e.ID, "success", "output", "", 0, 1500)
