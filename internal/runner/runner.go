@@ -43,6 +43,18 @@ func (w *logWriter) Write(p []byte) (int, error) {
 	return n, nil
 }
 
+func buildEnv(job *model.Job) []string {
+	var env []string
+	var envVars map[string]string
+	if err := json.Unmarshal([]byte(job.EnvVars), &envVars); err == nil {
+		for k, v := range envVars {
+			env = append(env, fmt.Sprintf("%s=%s", k, v))
+		}
+	}
+	env = append(env, "PYTHONUNBUFFERED=1")
+	return env
+}
+
 type hostMapping struct {
 	Host      string `json:"host"`
 	Container string `json:"container"`
@@ -130,13 +142,7 @@ func (r *Runner) runJob(job *model.Job, execID int64, source string) {
 		imageName = "kronize/python-runner"
 	}
 
-	var env []string
-	var envVars map[string]string
-	if err := json.Unmarshal([]byte(job.EnvVars), &envVars); err == nil {
-		for k, v := range envVars {
-			env = append(env, fmt.Sprintf("%s=%s", k, v))
-		}
-	}
+	env := buildEnv(job)
 
 	var mounts []mount.Mount
 	var mappings []hostMapping
