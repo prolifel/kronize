@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"kronize/internal/db"
+	"kronize/internal/logstream"
 	"kronize/internal/model"
 	"kronize/internal/runner"
 
@@ -35,12 +36,12 @@ func cronTZ() *time.Location {
 	return loc
 }
 
-func New(database *sql.DB, scriptsDir string) *Scheduler {
+func New(database *sql.DB, scriptsDir string, hub *logstream.Hub) *Scheduler {
 	loc := cronTZ()
 	return &Scheduler{
 		db:      database,
-		cron:    cron.New(cron.WithLocation(loc), cron.WithParser(cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor))),
-		runner:  runner.New(database, scriptsDir),
+		cron:    cron.New(cron.WithLocation(loc), cron.WithParser(cron.NewParser(cron.Minute|cron.Hour|cron.Dom|cron.Month|cron.Dow|cron.Descriptor))),
+		runner:  runner.New(database, scriptsDir, hub),
 		entries: make(map[int64]cron.EntryID),
 	}
 }
@@ -65,7 +66,7 @@ func (s *Scheduler) AddJob(job *model.Job) {
 		s.cron.Remove(eid)
 	}
 	eid, err := s.cron.AddFunc(job.CronExpression, func() {
-		s.runner.ExecuteJob(job)
+		s.runner.Enqueue(job, "scheduled")
 	})
 	if err != nil {
 		slog.Error("failed to schedule job", "job_id", job.ID, "name", job.Name, "error", err)
@@ -84,7 +85,7 @@ func (s *Scheduler) UpdateJob(job *model.Job) {
 	}
 	if job.Enabled {
 		eid, err := s.cron.AddFunc(job.CronExpression, func() {
-			s.runner.ExecuteJob(job)
+			s.runner.Enqueue(job, "scheduled")
 		})
 		if err != nil {
 			slog.Error("failed to update job", "job_id", job.ID, "name", job.Name, "error", err)
@@ -103,8 +104,8 @@ func (s *Scheduler) RemoveJob(jobID int64) {
 	}
 }
 
-func (s *Scheduler) TriggerNow(job *model.Job) {
-	go s.runner.ExecuteJob(job)
+func (s *Scheduler) TriggerNow(job *model.Job) (int64, error) {
+	return s.runner.Enqueue(job, "manual")
 }
 
 func (s *Scheduler) cleanupLoop() {
