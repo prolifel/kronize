@@ -184,6 +184,42 @@ func TestCreateAndUpdateJob(t *testing.T) {
 	}
 }
 
+func TestDeleteJobCascadesExecutions(t *testing.T) {
+	d := setupDB(t)
+
+	user, err := CreateUser(d, model.CreateUserRequest{Username: "cascadetest"}, "hash")
+	if err != nil {
+		t.Fatal(err)
+	}
+	imageID := seedRunnerImage(t, d)
+	j, err := CreateJob(d, model.CreateJobRequest{
+		Name:           "cascade-job",
+		CronExpression: "0 * * * *",
+		PythonCode:     "print('x')",
+		ImageID:        imageID,
+	}, user.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CreateExecution(d, j.ID, "scheduled"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := DeleteJob(d, j.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	// A deleted job's executions must not survive: a recreated job can land
+	// on the same id and would otherwise inherit the old job's history.
+	execs, err := ListExecutionsByJob(d, j.ID, 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(execs) != 0 {
+		t.Errorf("expected 0 executions after job delete, got %d", len(execs))
+	}
+}
+
 func TestCreateAndCompleteExecution(t *testing.T) {
 	d := setupDB(t)
 
