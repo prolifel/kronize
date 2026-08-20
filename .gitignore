@@ -188,3 +188,4 @@ scripts/
 
 .DS_Store
 .superpowers/
+.worktrees/
