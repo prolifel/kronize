@@ -11,6 +11,7 @@ import (
 	"kronize/internal/auth"
 	"kronize/internal/db"
 	"kronize/internal/handler"
+	"kronize/internal/logstream"
 	"kronize/internal/scheduler"
 
 	"github.com/go-chi/chi/v5"
@@ -23,15 +24,18 @@ type Server struct {
 	JWTSecret  string
 	ScriptsDir string
 	Scheduler  *scheduler.Scheduler
+	StreamHub  *logstream.Hub
 }
 
 func New(database *sql.DB, addr, jwtSecret, scriptsDir string) *Server {
+	hub := logstream.New(database)
 	return &Server{
 		DB:         database,
 		Addr:       addr,
 		JWTSecret:  jwtSecret,
 		ScriptsDir: scriptsDir,
-		Scheduler:  scheduler.New(database, scriptsDir),
+		Scheduler:  scheduler.New(database, scriptsDir, hub),
+		StreamHub:  hub,
 	}
 }
 
@@ -66,6 +70,7 @@ func (s *Server) Start() error {
 
 		r.Get("/jobs/{id}/executions", handler.ListExecutions(s.DB))
 		r.Get("/executions/{id}", handler.GetExecution(s.DB))
+		r.Get("/executions/{id}/stream", handler.StreamExecution(s.DB, s.StreamHub))
 
 		r.Get("/stats", handler.GetStats(s.DB))
 

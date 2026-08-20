@@ -180,8 +180,12 @@ func RunJob(database *sql.DB, sched *scheduler.Scheduler) http.HandlerFunc {
 			accessErrorJSON(w, aerr)
 			return
 		}
-		sched.TriggerNow(job)
-		jsonResponse(w, http.StatusAccepted, map[string]string{"message": "job triggered"})
+		execID, err := sched.TriggerNow(job)
+		if err != nil {
+			jsonError(w, http.StatusServiceUnavailable, "failed to trigger job")
+			return
+		}
+		jsonResponse(w, http.StatusAccepted, map[string]int64{"execution_id": execID})
 	}
 }
 
