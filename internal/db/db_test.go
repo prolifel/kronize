@@ -102,6 +102,18 @@ func TestCreateAndGetUser(t *testing.T) {
 	}
 }
 
+func TestCreateUserRequiresPasswordChange(t *testing.T) {
+	d := setupDB(t)
+
+	u, err := CreateUser(d, model.CreateUserRequest{Username: "newuser"}, "hash")
+	if err != nil {
+		t.Fatalf("CreateUser() error = %v", err)
+	}
+	if !u.MustChangePassword {
+		t.Fatalf("MustChangePassword = false, want true")
+	}
+}
+
 func TestCreateAndUpdateJob(t *testing.T) {
 	d := setupDB(t)
 

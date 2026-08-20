@@ -60,6 +60,33 @@ func Logout() http.HandlerFunc {
 	}
 }
 
+func RequirePasswordChanged(database *sql.DB) func(http.Handler) http.Handler {
+	allowedPaths := map[string]bool{
+		"/api/auth/me":              true,
+		"/api/auth/change-password": true,
+		"/api/auth/logout":          true,
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if allowedPaths[r.URL.Path] {
+				next.ServeHTTP(w, r)
+				return
+			}
+			userID := auth.UserIDFromContext(r.Context())
+			user, err := db.GetUserByID(database, userID)
+			if err != nil {
+				jsonError(w, http.StatusNotFound, "user not found")
+				return
+			}
+			if user.MustChangePassword {
+				jsonError(w, http.StatusForbidden, "password change required")
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 func ChangePassword(database *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req model.ChangePasswordRequest
@@ -67,8 +94,8 @@ func ChangePassword(database *sql.DB) http.HandlerFunc {
 			jsonError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
-		if req.NewPassword == "" {
-			jsonError(w, http.StatusBadRequest, "new password required")
+		if len(req.NewPassword) < 6 {
+			jsonError(w, http.StatusBadRequest, "new password must be at least 6 characters")
 			return
 		}
 		userID := auth.UserIDFromContext(r.Context())

@@ -14,7 +14,7 @@ func CreateUser(db *sql.DB, req model.CreateUserRequest, passwordHash string) (*
 		role = "user"
 	}
 	res, err := db.Exec(
-		"INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+		"INSERT INTO users (username, password_hash, role, must_change_password) VALUES (?, ?, ?, 1)",
 		req.Username, passwordHash, role,
 	)
 	if err != nil {

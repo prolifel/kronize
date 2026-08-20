@@ -4,7 +4,7 @@ import { api } from '../api'
 import { useAuth } from '../AuthContext'
 
 export default function ChangePasswordPage() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const navigate = useNavigate()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -26,6 +26,7 @@ export default function ChangePasswordPage() {
     try {
       await api.changePassword({ current_password: currentPassword, new_password: newPassword })
       setSuccess(true)
+      await refreshUser()
       setTimeout(() => navigate('/dashboard'), 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to change password')

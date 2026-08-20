@@ -49,7 +49,7 @@ func (s *Server) Start() error {
 	r.Use(chiMiddleware.Recoverer)
 
 	r.Route("/api", func(r chi.Router) {
-		r.Use(auth.Middleware(s.JWTSecret))
+		r.Use(auth.Middleware(s.JWTSecret), handler.RequirePasswordChanged(s.DB))
 
 		r.Post("/auth/login", handler.Login(s.DB, s.JWTSecret))
 		r.Post("/auth/logout", handler.Logout())
