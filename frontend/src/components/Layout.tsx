@@ -26,6 +26,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />
   }
 
+  if (isAuthenticated && user?.must_change_password) {
+    if (location.pathname !== '/change-password') {
+      return <Navigate to="/change-password" replace />
+    }
+    return <>{children}</>
+  }
+
   if (isAuthenticated && publicPaths.includes(location.pathname)) {
     return <Navigate to="/dashboard" replace />
   }
