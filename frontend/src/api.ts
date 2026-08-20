@@ -60,7 +60,7 @@ export const api = {
     request<{ message: string }>(`/jobs/${id}`, { method: 'DELETE' }),
 
   runJob: (id: number) =>
-    request<{ message: string }>(`/jobs/${id}/run`, { method: 'POST' }),
+    request<{ execution_id: number }>(`/jobs/${id}/run`, { method: 'POST' }),
 
   toggleJob: (id: number) =>
     request<Job>(`/jobs/${id}/toggle`, { method: 'PUT' }),

@@ -39,6 +39,7 @@ export interface Execution {
   id: number
   job_id: number
   status: 'running' | 'success' | 'failed'
+  source: 'manual' | 'scheduled'
   stdout: string
   stderr: string
   exit_code: number | null
