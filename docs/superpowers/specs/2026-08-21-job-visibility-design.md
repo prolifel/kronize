@@ -61,13 +61,13 @@ Read access failure → 404 (existing behavior). Write access failure → 403 (e
    - `canAccessJob` applies the access rule above; `forWrite` keeps 404 vs 403 semantics.
    - `CreateJob` accepts optional `visibility` array.
    - `GetJob` returns `visibility` list with usernames resolved.
-   - New `UpdateJobVisibility` handler: owner-only, replaces the whole list in one transaction.
+   - New `UpdateJobVisibility` handler: owner-only, replaces the whole list in one transaction. Request body is a bare JSON array of `VisibilityTarget`.
 4. `internal/handler/execution_handler.go`, `execution_stream_handler.go`:
    - `ListExecutions`, `GetExecution`, `StreamExecution` resolve the job from the execution and check access first; failures → 404.
 5. `internal/handler/stats_handler.go`:
    - Stats become per-user: jobs visible to the caller (owner or shared) and their executions. No global leak.
 6. New `GET /api/users/search?q=`:
-   - Any authenticated user; returns `[{id, username}]` only (no roles, no hashes), username LIKE filter for autocomplete.
+   - Any authenticated user; returns `[{id, username}]` only (no roles, no hashes). `q` optional: when present, username LIKE filter; when absent, returns all users (id + username).
    - Existing admin-only `GET /api/users` unchanged.
 7. `internal/model/job.go`:
    - Add `Visibility []VisibilityTarget` to `Job` and `CreateJobRequest`; new `VisibilityTarget {Type, UserID, Username, Role}` and `UpdateVisibilityRequest []VisibilityTarget`.
