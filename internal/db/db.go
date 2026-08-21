@@ -74,6 +74,18 @@ func Migrate(db *sql.DB) error {
 		description TEXT DEFAULT '',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);
+
+	CREATE TABLE IF NOT EXISTS job_visibility (
+		job_id          INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+		target_type     TEXT NOT NULL CHECK (target_type IN ('user','role')),
+		target_user_id  INTEGER REFERENCES users(id),
+		target_role     TEXT
+	);
+
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_job_visibility_unique
+		ON job_visibility(job_id, target_type,
+		                  COALESCE(target_user_id, -1),
+		                  COALESCE(target_role, ''));
 	`
 	_, err := db.Exec(schema)
 	if err != nil {
