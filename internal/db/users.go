@@ -66,6 +66,27 @@ func CountUsers(db *sql.DB) (int, error) {
 	return count, err
 }
 
+func SearchUsers(db *sql.DB, q string) ([]model.UserSearchResult, error) {
+	rows, err := db.Query(
+		"SELECT id, username FROM users WHERE username LIKE '%' || ? || '%' ORDER BY username LIMIT 20",
+		q,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("search users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []model.UserSearchResult
+	for rows.Next() {
+		var u model.UserSearchResult
+		if err := rows.Scan(&u.ID, &u.Username); err != nil {
+			return nil, fmt.Errorf("scan user: %w", err)
+		}
+		users = append(users, u)
+	}
+	return users, nil
+}
+
 func UpdateUser(db *sql.DB, id int64, req model.UpdateUserRequest) (*model.User, error) {
 	if req.Username != nil || req.Role != nil {
 		query := "UPDATE users SET"

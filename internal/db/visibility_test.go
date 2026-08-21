@@ -172,3 +172,26 @@ func TestCreateJobWithVisibility(t *testing.T) {
 		t.Fatalf("expected alice share, got %+v", vis)
 	}
 }
+
+func TestSearchUsers(t *testing.T) {
+	d := setupDB(t)
+	seedUser(t, d, "alice", "user")
+	seedUser(t, d, "bob", "user")
+	seedUser(t, d, "carol", "user")
+
+	all, err := SearchUsers(d, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != 3 {
+		t.Fatalf("empty query should return all users, got %d", len(all))
+	}
+
+	matches, err := SearchUsers(d, "al")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) != 1 || matches[0].Username != "alice" {
+		t.Fatalf("expected only alice, got %+v", matches)
+	}
+}
