@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"kronize/internal/auth"
 	"kronize/internal/db"
 	"kronize/internal/model"
 
@@ -23,6 +24,12 @@ func ListExecutions(database *sql.DB) http.HandlerFunc {
 			limit = 20
 		}
 		offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		if _, aerr := canAccessJob(database, userID, role, jobID, false); aerr != nil {
+			accessErrorJSON(w, aerr)
+			return
+		}
 		execs, err := db.ListExecutionsByJob(database, jobID, limit, offset)
 		if err != nil {
 			jsonError(w, http.StatusInternalServerError, "failed to list executions")
@@ -53,6 +60,12 @@ func GetExecution(database *sql.DB) http.HandlerFunc {
 		exec, err := db.GetExecution(database, id)
 		if err != nil {
 			jsonError(w, http.StatusNotFound, "execution not found")
+			return
+		}
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		if _, aerr := canAccessJob(database, userID, role, exec.JobID, false); aerr != nil {
+			accessErrorJSON(w, aerr)
 			return
 		}
 		jsonResponse(w, http.StatusOK, exec)

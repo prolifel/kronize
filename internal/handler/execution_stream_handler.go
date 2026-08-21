@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"kronize/internal/auth"
 	"kronize/internal/db"
 	"kronize/internal/logstream"
 )
@@ -24,6 +25,12 @@ func StreamExecution(database *sql.DB, hub *logstream.Hub) http.HandlerFunc {
 		exec, err := db.GetExecution(database, id)
 		if err != nil {
 			jsonError(w, http.StatusNotFound, "execution not found")
+			return
+		}
+		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
+		if _, aerr := canAccessJob(database, userID, role, exec.JobID, false); aerr != nil {
+			accessErrorJSON(w, aerr)
 			return
 		}
 		if exec.Source != "manual" {

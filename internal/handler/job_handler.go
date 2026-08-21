@@ -22,18 +22,15 @@ type accessError struct {
 func (e *accessError) Error() string { return e.Err.Error() }
 
 func canAccessJob(database *sql.DB, userID int64, role string, jobID int64, forWrite bool) (*model.Job, *accessError) {
-	if role == "admin" {
-		job, err := db.GetJobByID(database, jobID)
-		if err != nil {
-			return nil, &accessError{Code: http.StatusNotFound, Err: fmt.Errorf("job not found")}
-		}
-		return job, nil
-	}
 	job, err := db.GetJobByID(database, jobID)
 	if err != nil {
 		return nil, &accessError{Code: http.StatusNotFound, Err: fmt.Errorf("job not found")}
 	}
-	if job.CreatedBy != userID {
+	ok, err := db.UserCanAccessJob(database, jobID, userID, role)
+	if err != nil {
+		return nil, &accessError{Code: http.StatusInternalServerError, Err: fmt.Errorf("access check failed")}
+	}
+	if !ok {
 		if forWrite {
 			return nil, &accessError{Code: http.StatusForbidden, Err: fmt.Errorf("forbidden")}
 		}
@@ -107,7 +104,69 @@ func GetJob(database *sql.DB) http.HandlerFunc {
 			accessErrorJSON(w, aerr)
 			return
 		}
+		vis, err := db.GetVisibility(database, id)
+		if err != nil {
+			jsonError(w, http.StatusInternalServerError, "failed to load visibility")
+			return
+		}
+		job.Visibility = vis
 		jsonResponse(w, http.StatusOK, job)
+	}
+}
+
+func UpdateJobVisibility(database *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "invalid job id")
+			return
+		}
+		userID := auth.UserIDFromContext(r.Context())
+		job, err := db.GetJobByID(database, id)
+		if err != nil {
+			jsonError(w, http.StatusNotFound, "job not found")
+			return
+		}
+		if job.CreatedBy != userID {
+			jsonError(w, http.StatusForbidden, "only the job owner can manage visibility")
+			return
+		}
+		var targets []model.VisibilityTarget
+		if err := decodeJSON(r, &targets); err != nil {
+			jsonError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		for _, t := range targets {
+			switch t.Type {
+			case "user":
+				if t.UserID <= 0 {
+					jsonError(w, http.StatusBadRequest, "invalid user target")
+					return
+				}
+				if _, err := db.GetUserByID(database, t.UserID); err != nil {
+					jsonError(w, http.StatusBadRequest, "unknown user")
+					return
+				}
+			case "role":
+				if t.Role != "admin" {
+					jsonError(w, http.StatusBadRequest, "unsupported role target")
+					return
+				}
+			default:
+				jsonError(w, http.StatusBadRequest, "invalid target type")
+				return
+			}
+		}
+		if err := db.ReplaceVisibility(database, id, targets); err != nil {
+			jsonError(w, http.StatusInternalServerError, "failed to update visibility")
+			return
+		}
+		vis, err := db.GetVisibility(database, id)
+		if err != nil {
+			jsonError(w, http.StatusInternalServerError, "failed to load visibility")
+			return
+		}
+		jsonResponse(w, http.StatusOK, vis)
 	}
 }
 
