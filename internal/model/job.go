@@ -16,8 +16,16 @@ type Job struct {
 	Enabled        bool      `json:"enabled"`
 	CreatedBy      int64     `json:"created_by"`
 	CreatedByUsername string  `json:"created_by_username"`
+	Visibility     []VisibilityTarget `json:"visibility,omitempty"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type VisibilityTarget struct {
+	Type     string `json:"type"` // "user" | "role"
+	UserID   int64  `json:"user_id,omitempty"`
+	Username string `json:"username,omitempty"`
+	Role     string `json:"role,omitempty"` // "admin"
 }
 
 type CreateJobRequest struct {
@@ -29,6 +37,7 @@ type CreateJobRequest struct {
 	HostMappings   string `json:"host_mappings"`
 	LogLevel       string `json:"log_level"`
 	ImageID        int64  `json:"image_id"`
+	Visibility     []VisibilityTarget `json:"visibility,omitempty"`
 }
 
 type UpdateJobRequest struct {
