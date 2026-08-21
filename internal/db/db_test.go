@@ -150,7 +150,7 @@ func TestCreateAndUpdateJob(t *testing.T) {
 		t.Error("expected enabled by default")
 	}
 
-	jobs, err := ListJobs(d, false, 0, "admin")
+	jobs, err := ListJobs(d, false, user.ID, "user")
 	if err != nil {
 		t.Fatalf("ListJobs() error = %v", err)
 	}
@@ -375,7 +375,7 @@ func TestJobCreatedByUsername(t *testing.T) {
 		t.Errorf("CreateJob() CreatedByUsername = %q, want %q", j.CreatedByUsername, "creator")
 	}
 
-	jobs, err := ListJobs(d, false, 0, "admin")
+	jobs, err := ListJobs(d, false, user.ID, "user")
 	if err != nil {
 		t.Fatalf("ListJobs() error = %v", err)
 	}
@@ -410,7 +410,7 @@ func TestJobHostMappings(t *testing.T) {
 		t.Errorf("CreateJob() HostMappings = %q, want %q", j.HostMappings, mappings)
 	}
 
-	jobs, err := ListJobs(d, false, 0, "admin")
+	jobs, err := ListJobs(d, false, user.ID, "user")
 	if err != nil {
 		t.Fatalf("ListJobs() error = %v", err)
 	}

@@ -27,6 +27,11 @@ func CreateJob(db *sql.DB, req model.CreateJobRequest, userID int64) (*model.Job
 		return nil, fmt.Errorf("create job: %w", err)
 	}
 	id, _ := res.LastInsertId()
+	if len(req.Visibility) > 0 {
+		if err := ReplaceVisibility(db, id, req.Visibility); err != nil {
+			return nil, fmt.Errorf("create job visibility: %w", err)
+		}
+	}
 	return GetJobByID(db, id)
 }
 
@@ -44,27 +49,12 @@ func GetJobByID(db *sql.DB, id int64) (*model.Job, error) {
 }
 
 func ListJobs(db *sql.DB, enabledOnly bool, userID int64, role string) ([]*model.Job, error) {
-	query := "SELECT " + jobCols + " " + jobFrom
-	var args []interface{}
-	var clauses []string
-
-	if role != "admin" {
-		clauses = append(clauses, "j.created_by = ?")
-		args = append(args, userID)
-	}
+	sub, args := VisibleJobSubquery(userID, role)
+	clauses := []string{"j.id IN " + sub}
 	if enabledOnly {
 		clauses = append(clauses, "j.enabled = 1")
 	}
-	if len(clauses) > 0 {
-		query += " WHERE "
-		for i, c := range clauses {
-			if i > 0 {
-				query += " AND "
-			}
-			query += c
-		}
-	}
-	query += " ORDER BY j.created_at DESC"
+	query := "SELECT " + jobCols + " " + jobFrom + " WHERE " + joinClauses(clauses) + " ORDER BY j.created_at DESC"
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
@@ -145,7 +135,24 @@ func DeleteJob(db *sql.DB, id int64) error {
 }
 
 func ListEnabledJobs(db *sql.DB) ([]*model.Job, error) {
-	return ListJobs(db, true, 0, "admin")
+	rows, err := db.Query(
+		"SELECT " + jobCols + " " + jobFrom + " WHERE j.enabled = 1 ORDER BY j.created_at DESC",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list enabled jobs: %w", err)
+	}
+	defer rows.Close()
+
+	var jobs []*model.Job
+	for rows.Next() {
+		j := &model.Job{}
+		if err := rows.Scan(&j.ID, &j.Name, &j.Description, &j.CronExpression, &j.PythonCode,
+			&j.ImageID, &j.Image, &j.EnvVars, &j.HostMappings, &j.LogLevel, &j.Enabled, &j.CreatedBy, &j.CreatedByUsername, &j.CreatedAt, &j.UpdatedAt); err != nil {
+			return nil, fmt.Errorf("scan job: %w", err)
+		}
+		jobs = append(jobs, j)
+	}
+	return jobs, nil
 }
 
 func joinFields(fields []string) string {
@@ -155,6 +162,17 @@ func joinFields(fields []string) string {
 			result += ", "
 		}
 		result += f
+	}
+	return result
+}
+
+func joinClauses(clauses []string) string {
+	result := ""
+	for i, c := range clauses {
+		if i > 0 {
+			result += " AND "
+		}
+		result += c
 	}
 	return result
 }
