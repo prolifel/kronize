@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import StatusBadge from '../components/StatusBadge'
 import type { Job } from '../types'
+import { useAuth } from '../AuthContext'
 
 export default function JobListPage() {
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
   const [jobs, setJobs] = useState<Job[]>([])
   const [error, setError] = useState('')
 
@@ -68,7 +70,14 @@ export default function JobListPage() {
               {jobs.map((job) => (
                 <tr key={job.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/jobs/${job.id}`)}>
                   <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{job.name}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-medium text-gray-900">{job.name}</div>
+                      {currentUser && job.created_by !== currentUser.id && (
+                        <span className="text-xs bg-purple-100 text-purple-700 rounded-full px-2 py-0.5">
+                          Shared
+                        </span>
+                      )}
+                    </div>
                     {job.description && (
                       <div className="text-sm text-gray-500">{job.description}</div>
                     )}
