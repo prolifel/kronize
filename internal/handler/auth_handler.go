@@ -62,6 +62,7 @@ func Logout() http.HandlerFunc {
 
 func RequirePasswordChanged(database *sql.DB) func(http.Handler) http.Handler {
 	allowedPaths := map[string]bool{
+		"/api/auth/login":          true,
 		"/api/auth/me":              true,
 		"/api/auth/change-password": true,
 		"/api/auth/logout":          true,

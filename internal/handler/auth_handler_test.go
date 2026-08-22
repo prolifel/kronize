@@ -185,3 +185,17 @@ func TestRequirePasswordChangedAllowsAfterClear(t *testing.T) {
 		t.Fatalf("status = %d, want %d; body = %s", rr.Code, http.StatusNoContent, rr.Body.String())
 	}
 }
+
+func TestRequirePasswordChangedAllowsLogin(t *testing.T) {
+	d := setupHandlerTestDB(t)
+
+	// login is unauthenticated — no token, no user in context
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", nil)
+	rr := httptest.NewRecorder()
+	chain := auth.Middleware("secret")(RequirePasswordChanged(d)(http.HandlerFunc(okHandler)))
+	chain.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("login must pass through middleware, got %d: %s", rr.Code, rr.Body.String())
+	}
+}
