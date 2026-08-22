@@ -5,6 +5,7 @@ import CodeEditor from '../components/CodeEditor'
 import CronHelper from '../components/CronHelper'
 import EnvVarEditor from '../components/EnvVarEditor'
 import HostMappingsEditor from '../components/HostMappingsEditor'
+import JobVisibilityEditor from '../components/JobVisibilityEditor'
 import type { JobFormData, RunnerImage } from '../types'
 
 export default function JobFormPage() {
@@ -63,6 +64,7 @@ export default function JobFormPage() {
     try {
       if (isEdit) {
         await api.updateJob(Number(id), form)
+        await api.updateJobVisibility(Number(id), form.visibility)
       } else {
         await api.createJob(form)
       }
@@ -154,6 +156,14 @@ export default function JobFormPage() {
           value={form.host_mappings}
           onChange={(v) => setForm({ ...form, host_mappings: v })}
         />
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Sharing</label>
+          <JobVisibilityEditor
+            targets={form.visibility}
+            onChange={(v) => setForm((prev) => ({ ...prev, visibility: v }))}
+          />
+        </div>
 
         <div className="flex justify-end gap-3">
           <button
