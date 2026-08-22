@@ -21,6 +21,7 @@ export default function JobFormPage() {
     host_mappings: '[]',
     log_level: 'info',
     image_id: 0,
+    visibility: [],
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -42,6 +43,7 @@ export default function JobFormPage() {
           host_mappings: job.host_mappings || '[]',
           log_level: job.log_level,
           image_id: job.image_id,
+          visibility: job.visibility || [],
         })
       }).catch((err) => setError(err.message))
     }

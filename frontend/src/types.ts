@@ -20,8 +20,21 @@ export interface Job {
   enabled: boolean
   created_by: number
   created_by_username: string
+  visibility: VisibilityTarget[]
   created_at: string
   updated_at: string
+}
+
+export interface VisibilityTarget {
+  type: 'user' | 'role'
+  user_id?: number
+  username?: string
+  role?: string
+}
+
+export interface UserSearchResult {
+  id: number
+  username: string
 }
 
 export interface JobFormData {
@@ -33,6 +46,7 @@ export interface JobFormData {
   host_mappings: string
   log_level: string
   image_id: number
+  visibility: VisibilityTarget[]
 }
 
 export interface Execution {

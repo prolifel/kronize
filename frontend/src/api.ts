@@ -1,4 +1,4 @@
-import type { Job, JobFormData, Execution, Stats, Setting, LoginResponse, User, RunnerImage } from './types'
+import type { Job, JobFormData, Execution, Stats, Setting, LoginResponse, User, RunnerImage, VisibilityTarget, UserSearchResult } from './types'
 
 const BASE = '/api'
 
@@ -64,6 +64,12 @@ export const api = {
 
   toggleJob: (id: number) =>
     request<Job>(`/jobs/${id}/toggle`, { method: 'PUT' }),
+
+  updateJobVisibility: (id: number, targets: VisibilityTarget[]) =>
+    request<VisibilityTarget[]>(`/jobs/${id}/visibility`, { method: 'PUT', body: JSON.stringify(targets) }),
+
+  searchUsers: (q: string) =>
+    request<UserSearchResult[]>(`/users/search${q ? `?q=${encodeURIComponent(q)}` : ''}`),
 
   listExecutions: (jobId: number, limit = 20, offset = 0) =>
     request<Execution[]>(`/jobs/${jobId}/executions?limit=${limit}&offset=${offset}`),
