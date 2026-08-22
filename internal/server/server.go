@@ -67,6 +67,7 @@ func (s *Server) Start() error {
 		r.Delete("/jobs/{id}", handler.DeleteJob(s.DB, s.Scheduler))
 		r.Post("/jobs/{id}/run", handler.RunJob(s.DB, s.Scheduler))
 		r.Put("/jobs/{id}/toggle", handler.ToggleJob(s.DB, s.Scheduler))
+		r.Put("/jobs/{id}/visibility", handler.UpdateJobVisibility(s.DB))
 
 		r.Get("/jobs/{id}/executions", handler.ListExecutions(s.DB))
 		r.Get("/executions/{id}", handler.GetExecution(s.DB))
@@ -78,6 +79,7 @@ func (s *Server) Start() error {
 		r.Put("/settings", handler.UpdateSettings(s.DB))
 
 		r.Get("/runners", handler.ListRunnerImages(s.DB))
+		r.Get("/users/search", handler.SearchUsers(s.DB))
 
 		r.Group(func(r chi.Router) {
 			r.Use(auth.AdminOnly)
