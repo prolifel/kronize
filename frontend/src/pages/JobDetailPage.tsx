@@ -159,10 +159,10 @@ export default function JobDetailPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{job.name}</h1>
           {job.description && <p className="text-gray-500 mt-1">{job.description}</p>}
-          {job.visibility.length > 0 && (
+          {job.visibility?.length > 0 && (
             <p className="text-sm text-gray-500 mt-1">
               Shared with:{' '}
-              {job.visibility.map((t) =>
+              {(job.visibility ?? []).map((t) =>
                 t.type === 'role' ? 'all admins' : t.username
               ).join(', ')}
             </p>
