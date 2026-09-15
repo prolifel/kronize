@@ -22,7 +22,7 @@ services:
       - "${DOCKER_GID:-999}"
 
   python-runner:
-    image: ${REGISTRY_URL}/kronize/python-runner:python-runner-v1.0.5
+    image: ${REGISTRY_URL}/kronize/python-runner:python-runner-v1.0.6
     container_name: kronize-python-runner
     restart: unless-stopped
 

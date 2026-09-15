@@ -15,7 +15,8 @@ RUN pip install --no-cache-dir \
     pyyaml \
     python-dotenv \
     beautifulsoup4 \
-    pymongo
+    pymongo \
+    matplotlib
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
