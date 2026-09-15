@@ -14,7 +14,8 @@ RUN pip install --no-cache-dir \
     requests \
     pyyaml \
     python-dotenv \
-    beautifulsoup4
+    beautifulsoup4 \
+    pymongo
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
