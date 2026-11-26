@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir \
     google-api-python-client \
     google-auth-httplib2 \
     google-auth-oauthlib \
-    boto3 \
+    "boto3>=1.34.0" \
     botocore \
     requests \
     pyyaml \
