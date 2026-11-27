@@ -1,6 +1,6 @@
 services:
   kronize:
-    image: ${REGISTRY_URL}/kronize/kronize:kronize-v1.0.19
+    image: ${REGISTRY_URL}/kronize/kronize:kronize-v1.0.20
     container_name: kronize
     restart: unless-stopped
     networks:
@@ -9,7 +9,7 @@ services:
       - "6182:8080"
     environment:
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET required}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - ADDR=:8080
       - REGISTRY_URL=${REGISTRY_URL:?REGISTRY_URL required}
       - TZ=${TZ}
