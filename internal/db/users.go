@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"kronize/internal/model"
 )
@@ -66,10 +67,17 @@ func CountUsers(db *sql.DB) (int, error) {
 	return count, err
 }
 
+var likeEscaper = strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+
 func SearchUsers(db *sql.DB, q string) ([]model.UserSearchResult, error) {
+	trimmed := strings.TrimSpace(q)
+	if trimmed == "" {
+		return []model.UserSearchResult{}, nil
+	}
+	escaped := likeEscaper.Replace(trimmed)
 	rows, err := db.Query(
-		"SELECT id, username FROM users WHERE username LIKE '%' || ? || '%' ORDER BY username LIMIT 20",
-		q,
+		`SELECT id, username FROM users WHERE username LIKE '%' || ? || '%' ESCAPE '\' ORDER BY username LIMIT 20`,
+		escaped,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("search users: %w", err)

@@ -14,9 +14,14 @@ export default function JobVisibilityEditor({ targets, onChange }: Props) {
   const searchSeq = useRef(0)
 
   useEffect(() => {
+    const trimmed = query.trim()
+    if (trimmed.length < 2) {
+      setResults([])
+      return
+    }
     const seq = ++searchSeq.current
     const t = setTimeout(() => {
-      api.searchUsers(query).then((users) => {
+      api.searchUsers(trimmed).then((users) => {
         if (seq === searchSeq.current) setResults(users)
       }).catch(() => {})
     }, 200)

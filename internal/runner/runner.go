@@ -22,7 +22,8 @@ import (
 )
 
 const (
-	runTimeout      = 10 * time.Minute
+	runTimeout          = 10 * time.Minute
+	pullTimeout         = 30 * time.Second
 	runnerContainerUser = "65534:65534"
 )
 
@@ -183,8 +184,18 @@ func (r *Runner) runJob(job *model.Job, execID int64, source string) {
 		return
 	}
 
-	if err := ensureImage(ctx, cli, imageName); err != nil {
-		r.failExecution(execID, "", err.Error(), time.Since(start).Milliseconds())
+	if err := model.ValidateRunnerImageRef(imageName); err != nil {
+		slog.Warn("blocked job execution due to invalid runner image", "job_id", job.ID, "execution_id", execID, "image", imageName, "error", err)
+		r.failExecution(execID, "", "invalid runner image", time.Since(start).Milliseconds())
+		return
+	}
+
+	pullCtx, pullCancel := context.WithTimeout(ctx, pullTimeout)
+	err = ensureImage(pullCtx, cli, imageName)
+	pullCancel()
+	if err != nil {
+		slog.Error("runner image pull failed", "job_id", job.ID, "execution_id", execID, "image", imageName, "error", err)
+		r.failExecution(execID, "", "image pull failed", time.Since(start).Milliseconds())
 		return
 	}
 

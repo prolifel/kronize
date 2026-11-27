@@ -179,12 +179,20 @@ func TestSearchUsers(t *testing.T) {
 	seedUser(t, d, "bob", "user")
 	seedUser(t, d, "carol", "user")
 
-	all, err := SearchUsers(d, "")
+	empty, err := SearchUsers(d, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(all) != 3 {
-		t.Fatalf("empty query should return all users, got %d", len(all))
+	if len(empty) != 0 {
+		t.Fatalf("empty query should return 0 users, got %d", len(empty))
+	}
+
+	wildcard, err := SearchUsers(d, "%")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(wildcard) != 0 {
+		t.Fatalf("wildcard query should return 0 users, got %d", len(wildcard))
 	}
 
 	matches, err := SearchUsers(d, "al")

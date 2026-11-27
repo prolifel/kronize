@@ -2,9 +2,11 @@ package handler
 
 import (
 	"database/sql"
+	"log/slog"
 	"net/http"
 	"strconv"
 
+	"kronize/internal/auth"
 	"kronize/internal/db"
 	"kronize/internal/model"
 
@@ -36,6 +38,11 @@ func CreateRunnerImage(database *sql.DB) http.HandlerFunc {
 			jsonError(w, http.StatusBadRequest, "name and image required")
 			return
 		}
+		if err := model.ValidateRunnerImageRef(req.Image); err != nil {
+			slog.Warn("rejected runner image creation", "user_id", auth.UserIDFromContext(r.Context()), "image", req.Image, "error", err)
+			jsonError(w, http.StatusBadRequest, err.Error())
+			return
+		}
 		image, err := db.CreateRunnerImage(database, req)
 		if err != nil {
 			jsonError(w, http.StatusInternalServerError, "failed to create runner image")
@@ -61,6 +68,13 @@ func UpdateRunnerImage(database *sql.DB) http.HandlerFunc {
 		if req.Name == nil && req.Image == nil && req.Description == nil {
 			jsonError(w, http.StatusBadRequest, "at least one field required")
 			return
+		}
+		if req.Image != nil {
+			if err := model.ValidateRunnerImageRef(*req.Image); err != nil {
+				slog.Warn("rejected runner image update", "user_id", auth.UserIDFromContext(r.Context()), "runner_id", id, "image", *req.Image, "error", err)
+				jsonError(w, http.StatusBadRequest, err.Error())
+				return
+			}
 		}
 		image, err := db.UpdateRunnerImage(database, id, req)
 		if err != nil {
