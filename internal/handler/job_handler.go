@@ -3,6 +3,7 @@ package handler
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -69,6 +70,7 @@ func ListJobs(database *sql.DB) http.HandlerFunc {
 func CreateJob(database *sql.DB, sched *scheduler.Scheduler, scriptsDir string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := auth.UserIDFromContext(r.Context())
+		role := auth.RoleFromContext(r.Context())
 		var req model.CreateJobRequest
 		if err := decodeJSON(r, &req); err != nil {
 			jsonError(w, http.StatusBadRequest, "invalid request body")
@@ -78,11 +80,28 @@ func CreateJob(database *sql.DB, sched *scheduler.Scheduler, scriptsDir string) 
 			jsonError(w, http.StatusBadRequest, "name, cron_expression, and python_code required")
 			return
 		}
+		mappings, err := model.ParseAndValidateHostMappings(req.HostMappings)
+		if err != nil {
+			slog.Warn("rejected job creation with invalid host_mappings", "user_id", userID, "role", role, "error", err)
+			jsonError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		envVars, err := model.ParseAndValidateEnvVars(req.EnvVars)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if role != "admin" && (len(mappings) > 0 || len(envVars) > 0) {
+			slog.Warn("forbidden non-admin job creation with host_mappings or env_vars", "user_id", userID, "role", role, "mappings_count", len(mappings), "env_count", len(envVars))
+			jsonError(w, http.StatusForbidden, "only admins can configure host_mappings or env_vars")
+			return
+		}
 		job, err := db.CreateJob(database, req, userID)
 		if err != nil {
 			jsonError(w, http.StatusInternalServerError, "failed to create job")
 			return
 		}
+		slog.Info("job created", "job_id", job.ID, "name", job.Name, "user_id", userID, "role", role, "image_id", job.ImageID, "host_mappings_count", len(mappings), "env_vars_count", len(envVars))
 		sched.AddJob(job)
 		resp := *job
 		resp.EnvVars = ""
@@ -189,11 +208,37 @@ func UpdateJob(database *sql.DB, sched *scheduler.Scheduler, scriptsDir string) 
 			jsonError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
+		if req.HostMappings != nil {
+			mappings, err := model.ParseAndValidateHostMappings(*req.HostMappings)
+			if err != nil {
+				slog.Warn("rejected job update with invalid host_mappings", "job_id", id, "user_id", userID, "role", role, "error", err)
+				jsonError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			if role != "admin" && len(mappings) > 0 {
+				slog.Warn("forbidden non-admin job update with host_mappings", "job_id", id, "user_id", userID, "role", role, "mappings_count", len(mappings))
+				jsonError(w, http.StatusForbidden, "only admins can configure host_mappings")
+				return
+			}
+		}
+		if req.EnvVars != nil {
+			envVars, err := model.ParseAndValidateEnvVars(*req.EnvVars)
+			if err != nil {
+				jsonError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			if role != "admin" && len(envVars) > 0 {
+				slog.Warn("forbidden non-admin job update with env_vars", "job_id", id, "user_id", userID, "role", role, "env_count", len(envVars))
+				jsonError(w, http.StatusForbidden, "only admins can configure env_vars")
+				return
+			}
+		}
 		job, err := db.UpdateJob(database, id, req)
 		if err != nil {
 			jsonError(w, http.StatusNotFound, "job not found")
 			return
 		}
+		slog.Info("job updated", "job_id", job.ID, "user_id", userID, "role", role)
 		sched.UpdateJob(job)
 		resp := *job
 		resp.PythonCode = ""
@@ -244,6 +289,7 @@ func RunJob(database *sql.DB, sched *scheduler.Scheduler) http.HandlerFunc {
 			jsonError(w, http.StatusServiceUnavailable, "failed to trigger job")
 			return
 		}
+		slog.Info("job triggered", "job_id", job.ID, "execution_id", execID, "user_id", userID, "role", role)
 		jsonResponse(w, http.StatusAccepted, map[string]int64{"execution_id": execID})
 	}
 }

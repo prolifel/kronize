@@ -21,7 +21,10 @@ import (
 	"kronize/internal/notifier"
 )
 
-const runTimeout = 10 * time.Minute
+const (
+	runTimeout      = 10 * time.Minute
+	runnerContainerUser = "65534:65534"
+)
 
 type logWriter struct {
 	stream string
@@ -45,8 +48,7 @@ func (w *logWriter) Write(p []byte) (int, error) {
 
 func buildEnv(job *model.Job) []string {
 	var env []string
-	var envVars map[string]string
-	if err := json.Unmarshal([]byte(job.EnvVars), &envVars); err == nil {
+	if envVars, err := model.ParseAndValidateEnvVars(job.EnvVars); err == nil {
 		for k, v := range envVars {
 			env = append(env, fmt.Sprintf("%s=%s", k, v))
 		}
@@ -55,10 +57,40 @@ func buildEnv(job *model.Job) []string {
 	return env
 }
 
-type hostMapping struct {
-	Host      string `json:"host"`
-	Container string `json:"container"`
-	ReadOnly  bool   `json:"read_only"`
+func buildMounts(job *model.Job) ([]mount.Mount, error) {
+	mappings, err := model.ParseAndValidateHostMappings(job.HostMappings)
+	if err != nil {
+		return nil, err
+	}
+	var mounts []mount.Mount
+	for _, m := range mappings {
+		mounts = append(mounts, mount.Mount{
+			Type:     mount.TypeBind,
+			Source:   m.Host,
+			Target:   m.Container,
+			ReadOnly: m.ReadOnly,
+		})
+	}
+	return mounts, nil
+}
+
+func buildContainerConfigs(imageName string, env []string, mounts []mount.Mount) (*container.Config, *container.HostConfig) {
+	cfg := &container.Config{
+		Image:     imageName,
+		User:      runnerContainerUser,
+		Env:       env,
+		OpenStdin: true,
+		StdinOnce: true,
+	}
+	hostCfg := &container.HostConfig{
+		Mounts:         mounts,
+		AutoRemove:     true,
+		ReadonlyRootfs: true,
+		CapDrop:        []string{"ALL"},
+		SecurityOpt:    []string{"no-new-privileges:true"},
+		Tmpfs:          map[string]string{"/tmp": "rw,nosuid,nodev,size=64m"},
+	}
+	return cfg, hostCfg
 }
 
 func ensureImage(ctx context.Context, cli *client.Client, ref string) error {
@@ -144,17 +176,11 @@ func (r *Runner) runJob(job *model.Job, execID int64, source string) {
 
 	env := buildEnv(job)
 
-	var mounts []mount.Mount
-	var mappings []hostMapping
-	if err := json.Unmarshal([]byte(job.HostMappings), &mappings); err == nil {
-		for _, m := range mappings {
-			mounts = append(mounts, mount.Mount{
-				Type:     mount.TypeBind,
-				Source:   m.Host,
-				Target:   m.Container,
-				ReadOnly: m.ReadOnly,
-			})
-		}
+	mounts, err := buildMounts(job)
+	if err != nil {
+		slog.Warn("blocked job execution due to invalid host_mappings", "job_id", job.ID, "execution_id", execID, "error", err)
+		r.failExecution(execID, "", "invalid host_mappings: "+err.Error(), time.Since(start).Milliseconds())
+		return
 	}
 
 	if err := ensureImage(ctx, cli, imageName); err != nil {
@@ -162,9 +188,10 @@ func (r *Runner) runJob(job *model.Job, execID int64, source string) {
 		return
 	}
 
+	containerCfg, hostCfg := buildContainerConfigs(imageName, env, mounts)
 	createResp, err := cli.ContainerCreate(ctx,
-		&container.Config{Image: imageName, Env: env, OpenStdin: true, StdinOnce: true},
-		&container.HostConfig{Mounts: mounts, AutoRemove: true},
+		containerCfg,
+		hostCfg,
 		nil, nil,
 		fmt.Sprintf("kronize-job-%d-%d", job.ID, execID),
 	)

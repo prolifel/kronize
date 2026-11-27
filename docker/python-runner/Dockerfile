@@ -20,4 +20,5 @@ RUN pip install --no-cache-dir \
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+USER 65534:65534
 ENTRYPOINT ["/entrypoint.sh"]
