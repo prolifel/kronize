@@ -1,6 +1,6 @@
 services:
   kronize:
-    image: ${REGISTRY_URL}/kronize/kronize:kronize-v1.0.17
+    image: ${REGISTRY_URL}/kronize/kronize:kronize-v1.0.18
     container_name: kronize
     restart: unless-stopped
     networks:
