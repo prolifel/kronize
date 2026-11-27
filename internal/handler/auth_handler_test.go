@@ -199,3 +199,50 @@ func TestRequirePasswordChangedAllowsLogin(t *testing.T) {
 		t.Fatalf("login must pass through middleware, got %d: %s", rr.Code, rr.Body.String())
 	}
 }
+
+func TestLoginRateLimiting(t *testing.T) {
+	d := setupHandlerTestDB(t)
+	createHandlerTestUser(t, d, "ratelimituser", "correct-password-123")
+	h := Login(d, "secret")
+
+	// 5 failed attempts -> 401
+	for i := 0; i < loginMaxFailures; i++ {
+		req := httptest.NewRequest(http.MethodPost, "/api/auth/login", strings.NewReader(`{"username":"ratelimituser","password":"wrong"}`))
+		req.RemoteAddr = "192.0.2.10:12345"
+		rr := httptest.NewRecorder()
+		h.ServeHTTP(rr, req)
+		if rr.Code != http.StatusUnauthorized {
+			t.Fatalf("attempt %d status = %d, want 401", i+1, rr.Code)
+		}
+	}
+
+	// 6th attempt (even with correct password) -> 429 Too Many Requests
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", strings.NewReader(`{"username":"ratelimituser","password":"correct-password-123"}`))
+	req.RemoteAddr = "192.0.2.10:12345"
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTooManyRequests {
+		t.Fatalf("locked out status = %d, want 429: %s", rr.Code, rr.Body.String())
+	}
+	if rr.Header().Get("Retry-After") == "" {
+		t.Fatalf("expected Retry-After header on 429 response")
+	}
+}
+
+func TestChangePasswordRejectsWeakDefaultPassword(t *testing.T) {
+	d := setupHandlerTestDB(t)
+	u := createHandlerTestUser(t, d, "weakpwd", "correct-password")
+
+	req := authenticatedRequest(
+		"secret", u.ID, u.Username, u.Role,
+		http.MethodPost,
+		"/api/auth/change-password",
+		`{"current_password":"correct-password","new_password":"password123"}`,
+	)
+	rr := httptest.NewRecorder()
+	auth.Middleware("secret")(ChangePassword(d)).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400; body = %s", rr.Code, rr.Body.String())
+	}
+}

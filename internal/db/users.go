@@ -152,6 +152,6 @@ func SeedAdmin(db *sql.DB, passwordHash string) error {
 	if err != nil {
 		return fmt.Errorf("seed admin: %w", err)
 	}
-	slog.Warn("seeded default admin user (password: admin)")
+	slog.Info("seeded initial admin user", "username", "admin")
 	return nil
 }

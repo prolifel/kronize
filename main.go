@@ -2,8 +2,11 @@ package main
 
 import (
 	"crypto/rand"
+	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"flag"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -23,6 +26,42 @@ func getAddr() string {
 	return ":8080"
 }
 
+func generateRandomPassword() (string, error) {
+	b := make([]byte, 18)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("generate random password: %w", err)
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+func seedInitialAdmin(database *sql.DB, adminPass string) error {
+	count, err := db.CountUsers(database)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+	generated := false
+	if adminPass == "" {
+		adminPass, err = generateRandomPassword()
+		if err != nil {
+			return err
+		}
+		generated = true
+	}
+	adminHash, err := auth.HashPassword(adminPass)
+	if err != nil {
+		return fmt.Errorf("hash admin password: %w", err)
+	}
+	if err := db.SeedAdmin(database, adminHash); err != nil {
+		return err
+	}
+	if generated {
+		slog.Warn("ADMIN_PASSWORD not set; generated initial admin password (change on first login)", "username", "admin", "password", adminPass)
+	}
+	return nil
+}
 func getJWTSecret(secret string) string {
 	if secret != "" {
 		return secret
@@ -63,16 +102,7 @@ func main() {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 
-	adminPass := os.Getenv("ADMIN_PASSWORD")
-	if adminPass == "" {
-		adminPass = "admin"
-		slog.Warn("ADMIN_PASSWORD not set, using default: admin")
-	}
-	adminHash, err := auth.HashPassword(adminPass)
-	if err != nil {
-		log.Fatalf("failed to hash admin password: %v", err)
-	}
-	if err := db.SeedAdmin(database, adminHash); err != nil {
+	if err := seedInitialAdmin(database, os.Getenv("ADMIN_PASSWORD")); err != nil {
 		log.Fatalf("failed to seed admin: %v", err)
 	}
 
