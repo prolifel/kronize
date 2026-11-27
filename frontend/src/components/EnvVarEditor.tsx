@@ -87,19 +87,19 @@ export default function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">Environment Variables</label>
-        <button type="button" onClick={() => setShowValues(!showValues)} className="text-xs text-gray-500 hover:text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Environment Variables</label>
+        <button type="button" onClick={() => setShowValues(!showValues)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
           {showValues ? 'Hide' : 'Show'} Values
         </button>
       </div>
 
       {/* Mode tabs */}
-      <div className="flex gap-0 border-b border-gray-300">
+      <div className="flex gap-0 border-b border-gray-300 dark:border-gray-700">
         <button
           type="button"
           onClick={() => mode === 'advanced' ? switchToSimple() : undefined}
           className={`px-3 py-1.5 text-sm font-medium border-b-2 -mb-px ${
-            mode === 'simple' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            mode === 'simple' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
           Simple
@@ -108,7 +108,7 @@ export default function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
           type="button"
           onClick={() => mode === 'simple' ? switchToAdvanced() : undefined}
           className={`px-3 py-1.5 text-sm font-medium border-b-2 -mb-px ${
-            mode === 'advanced' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            mode === 'advanced' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
           }`}
         >
           Advanced
@@ -117,7 +117,7 @@ export default function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
 
       {/* Warning banner */}
       {warnings.length > 0 && mode === 'simple' && (
-        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 px-3 py-2 rounded text-sm flex items-start gap-2">
+        <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 px-3 py-2 rounded text-sm flex items-start gap-2">
           <span>⚠</span>
           <span>
             {warnings.length} line{warnings.length > 1 ? 's' : ''} skipped:{' '}
@@ -126,7 +126,7 @@ export default function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
           <button
             type="button"
             onClick={() => setWarnings([])}
-            className="ml-auto text-yellow-600 hover:text-yellow-800 text-xs font-medium"
+            className="ml-auto text-yellow-600 dark:text-yellow-300 hover:text-yellow-800 dark:hover:text-yellow-100 text-xs font-medium"
           >
             Dismiss
           </button>
@@ -146,7 +146,7 @@ export default function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
                   next[i] = { ...next[i], key: e.target.value }
                   update(next)
                 }}
-                className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm font-mono"
+                className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded px-2 py-1.5 text-sm font-mono"
               />
               <input
                 type={showValues ? 'text' : 'password'}
@@ -157,12 +157,12 @@ export default function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
                   next[i] = { ...next[i], value: e.target.value }
                   update(next)
                 }}
-                className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm font-mono"
+                className="flex-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded px-2 py-1.5 text-sm font-mono"
               />
-              <button type="button" onClick={() => removeVar(i)} className="text-red-500 hover:text-red-700 text-sm">X</button>
+              <button type="button" onClick={() => removeVar(i)} className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm">X</button>
             </div>
           ))}
-          <button type="button" onClick={addVar} className="text-sm text-blue-600 hover:text-blue-800">+ Add Variable</button>
+          <button type="button" onClick={addVar} className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">+ Add Variable</button>
         </>
       ) : (
         <textarea
@@ -170,7 +170,7 @@ export default function EnvVarEditor({ value, onChange }: EnvVarEditorProps) {
           onChange={(e) => handleRawTextChange(e.target.value)}
           placeholder={"KEY=VALUE\n# comments are ignored"}
           rows={10}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       )}
     </div>

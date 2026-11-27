@@ -15,9 +15,9 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
-      {error && <div className="bg-red-50 text-red-700 px-4 py-2 rounded text-sm mb-4">{error}</div>}
-      {stats ? <StatsCards stats={stats} /> : <p className="text-gray-500">Loading...</p>}
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard</h1>
+      {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-2 rounded text-sm mb-4">{error}</div>}
+      {stats ? <StatsCards stats={stats} /> : <p className="text-gray-500 dark:text-gray-400">Loading...</p>}
     </div>
   )
 }

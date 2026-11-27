@@ -23,25 +23,25 @@ export default function ExecutionsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Recent Executions</h1>
-      {error && <div className="bg-red-50 text-red-700 px-4 py-2 rounded text-sm mb-4">{error}</div>}
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Recent Executions</h1>
+      {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-2 rounded text-sm mb-4">{error}</div>}
       {execs.length === 0 ? (
-        <p className="text-gray-500">No executions yet.</p>
+        <p className="text-gray-500 dark:text-gray-400">No executions yet.</p>
       ) : (
         <div className="space-y-4">
           {execs.map((exec) => (
-            <div key={exec.id} className="bg-white shadow rounded-lg p-4">
+            <div key={exec.id} className="bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 shadow rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    exec.status === 'success' ? 'bg-green-100 text-green-800' :
-                    exec.status === 'failed' ? 'bg-red-100 text-red-800' :
-                    'bg-blue-100 text-blue-800'
+                    exec.status === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
+                    exec.status === 'failed' ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' :
+                    'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
                   }`}>{exec.status}</span>
-                  <span className="text-sm font-medium text-gray-900">{exec.job_name}</span>
-                  <span className="text-sm text-gray-500">#{exec.id}</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">{exec.job_name}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">#{exec.id}</span>
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                   {exec.duration_ms != null ? `${exec.duration_ms}ms` : '-'}
                   {' | '}
                   {new Date(exec.started_at).toLocaleString()}

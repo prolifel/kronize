@@ -69,7 +69,7 @@ export default function RunnersPage() {
 
   if (currentUser?.role !== 'admin') {
     return (
-      <div className="text-center py-12 text-gray-500">Access denied. Admin only.</div>
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">Access denied. Admin only.</div>
     )
   }
 
@@ -78,7 +78,7 @@ export default function RunnersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Runner Images</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Runner Images</h1>
         <button
           onClick={() => setShowForm(!showForm)}
           className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
@@ -88,40 +88,40 @@ export default function RunnersPage() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+        <form onSubmit={handleCreate} className="bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 p-6 rounded-lg shadow mb-6 space-y-4">
           {formError && (
-            <div className="bg-red-50 text-red-700 px-4 py-2 rounded text-sm">{formError}</div>
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-2 rounded text-sm">{formError}</div>
           )}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
               <input
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g. Python 3.12"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image</label>
               <input
                 type="text"
                 value={formImage}
                 onChange={(e) => setFormImage(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g. python:3.12-slim"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
               <input
                 type="text"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Optional description"
               />
             </div>
@@ -135,37 +135,37 @@ export default function RunnersPage() {
         </form>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 rounded-lg shadow overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">ID</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Image</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Description</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Created</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {runners.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                   No runner images configured yet.
                 </td>
               </tr>
             ) : (
               runners.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
+                <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   {editingId === r.id ? (
                     <>
-                      <td className="px-4 py-3 text-sm text-gray-500">{r.id}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{r.id}</td>
                       <td className="px-4 py-3">
                         <input
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+                          className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-2 py-1 text-sm w-full"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -173,7 +173,7 @@ export default function RunnersPage() {
                           type="text"
                           value={editImage}
                           onChange={(e) => setEditImage(e.target.value)}
-                          className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+                          className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-2 py-1 text-sm w-full"
                         />
                       </td>
                       <td className="px-4 py-3">
@@ -181,20 +181,20 @@ export default function RunnersPage() {
                           type="text"
                           value={editDescription}
                           onChange={(e) => setEditDescription(e.target.value)}
-                          className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+                          className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-2 py-1 text-sm w-full"
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(r.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-right space-x-2">
                         <button
                           onClick={() => handleUpdate(r.id)}
-                          className="text-blue-600 text-sm hover:underline"
+                          className="text-blue-600 dark:text-blue-400 text-sm hover:underline"
                         >
                           Save
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="text-gray-500 text-sm hover:underline"
+                          className="text-gray-500 dark:text-gray-400 text-sm hover:underline"
                         >
                           Cancel
                         </button>
@@ -202,11 +202,11 @@ export default function RunnersPage() {
                     </>
                   ) : (
                     <>
-                      <td className="px-4 py-3 text-sm text-gray-500">{r.id}</td>
-                      <td className="px-4 py-3 text-sm font-medium">{r.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{r.image}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{r.description || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{new Date(r.created_at).toLocaleDateString()}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{r.id}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{r.name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{r.image}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{r.description || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(r.created_at).toLocaleDateString()}</td>
                       <td className="px-4 py-3 text-right space-x-2">
                         <button
                           onClick={() => {
@@ -215,13 +215,13 @@ export default function RunnersPage() {
                             setEditImage(r.image)
                             setEditDescription(r.description)
                           }}
-                          className="text-blue-600 text-sm hover:underline"
+                          className="text-blue-600 dark:text-blue-400 text-sm hover:underline"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(r.id, r.name)}
-                          className="text-red-600 text-sm hover:underline"
+                          className="text-red-600 dark:text-red-400 text-sm hover:underline"
                         >
                           Delete
                         </button>

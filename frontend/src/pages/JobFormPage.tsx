@@ -78,30 +78,30 @@ export default function JobFormPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
         {isEdit ? 'Edit Job' : 'New Cron Job'}
       </h1>
 
-      {error && <div className="bg-red-50 text-red-700 px-4 py-2 rounded text-sm mb-4">{error}</div>}
+      {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-2 rounded text-sm mb-4">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Log Level</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Log Level</label>
             <select
               value={form.log_level}
               onChange={(e) => setForm({ ...form, log_level: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm"
             >
               <option value="debug">DEBUG</option>
               <option value="info">INFO</option>
@@ -110,11 +110,11 @@ export default function JobFormPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image</label>
             <select
               value={form.image_id}
               onChange={(e) => setForm({ ...form, image_id: Number(e.target.value) })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm"
             >
               {runners.length === 0 && <option value={0}>No runners configured</option>}
               {runners.map((r) => (
@@ -125,12 +125,12 @@ export default function JobFormPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
           <input
             type="text"
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm"
           />
         </div>
 
@@ -140,7 +140,7 @@ export default function JobFormPage() {
         />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Python Code</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Python Code</label>
           <CodeEditor
             value={form.python_code}
             onChange={(v) => setForm({ ...form, python_code: v })}
@@ -158,7 +158,7 @@ export default function JobFormPage() {
         />
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Sharing</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sharing</label>
           <JobVisibilityEditor
             targets={form.visibility}
             onChange={(v) => setForm((prev) => ({ ...prev, visibility: v }))}
@@ -169,7 +169,7 @@ export default function JobFormPage() {
           <button
             type="button"
             onClick={() => navigate('/jobs')}
-            className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             Cancel
           </button>

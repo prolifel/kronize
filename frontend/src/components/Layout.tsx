@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
+import ThemeToggle from './ThemeToggle'
 
 const publicPaths = ['/login']
 
@@ -50,12 +51,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isActive = (path: string) => location.pathname.startsWith(path)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
-              <Link to="/dashboard" className="text-xl font-bold text-gray-900">
+              <Link to="/dashboard" className="text-xl font-bold text-gray-900 dark:text-white">
                 Kronize
               </Link>
               {navLinks.map((link) => (
@@ -64,8 +65,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   to={link.to}
                   className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 ${
                     isActive(link.to)
-                      ? 'border-blue-500 text-gray-900'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      ? 'border-blue-500 text-gray-900 dark:text-white'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                 >
                   {link.label}
@@ -73,11 +74,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               ))}
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500 font-mono">{formatTime(now)}</span>
-              <span className="text-sm text-gray-500">{user?.username}</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">{formatTime(now)}</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{user?.username}</span>
+              <ThemeToggle />
               <button
                 onClick={() => logout().then(() => navigate('/login'))}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               >
                 Logout
               </button>

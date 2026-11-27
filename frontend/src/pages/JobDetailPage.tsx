@@ -149,7 +149,7 @@ export default function JobDetailPage() {
     }
   }
 
-  if (!job) return <p className="text-gray-500">Loading...</p>
+  if (!job) return <p className="text-gray-500 dark:text-gray-400">Loading...</p>
 
   const canManage = job.created_by === currentUser?.id || currentUser?.role === 'admin'
 
@@ -157,10 +157,10 @@ export default function JobDetailPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{job.name}</h1>
-          {job.description && <p className="text-gray-500 mt-1">{job.description}</p>}
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{job.name}</h1>
+          {job.description && <p className="text-gray-500 dark:text-gray-400 mt-1">{job.description}</p>}
           {job.visibility?.length > 0 && (
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Shared with:{' '}
               {(job.visibility ?? []).map((t) =>
                 t.type === 'role' ? 'all admins' : t.username
@@ -172,8 +172,8 @@ export default function JobDetailPage() {
           <StatusBadge enabled={job.enabled} />
           {canManage && (
             <>
-              <Link to={`/jobs/${job.id}/edit`} className="text-sm text-blue-600 hover:text-blue-800">Edit</Link>
-              <button onClick={handleToggle} className="text-sm text-gray-600 hover:text-gray-800">
+              <Link to={`/jobs/${job.id}/edit`} className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Edit</Link>
+              <button onClick={handleToggle} className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
                 {job.enabled ? 'Disable' : 'Enable'}
               </button>
               <button
@@ -187,71 +187,71 @@ export default function JobDetailPage() {
         </div>
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 shadow rounded-lg p-6 mb-6">
         <dl className="grid grid-cols-2 gap-4">
           <div>
-            <dt className="text-sm text-gray-500">Schedule</dt>
-            <dd className="text-sm font-mono">{job.cron_expression}</dd>
+            <dt className="text-sm text-gray-500 dark:text-gray-400">Schedule</dt>
+            <dd className="text-sm font-mono text-gray-900 dark:text-gray-100">{job.cron_expression}</dd>
           </div>
           <div>
-            <dt className="text-sm text-gray-500">Image</dt>
-            <dd className="text-sm font-mono">{job.image}</dd>
+            <dt className="text-sm text-gray-500 dark:text-gray-400">Image</dt>
+            <dd className="text-sm font-mono text-gray-900 dark:text-gray-100">{job.image}</dd>
           </div>
         </dl>
       </div>
 
-      {error && <div className="bg-red-50 text-red-700 px-4 py-2 rounded text-sm mb-4">{error}</div>}
-      {success && <div className="bg-green-50 text-green-700 px-4 py-2 rounded text-sm mb-4">{success}</div>}
+      {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-2 rounded text-sm mb-4">{error}</div>}
+      {success && <div className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-4 py-2 rounded text-sm mb-4">{success}</div>}
 
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Execution History</h2>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Execution History</h2>
 
       {executions.length === 0 ? (
-        <p className="text-gray-500">No executions yet.</p>
+        <p className="text-gray-500 dark:text-gray-400">No executions yet.</p>
       ) : (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 shadow rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Started</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Duration</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Started</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {executions.map((exec) => (
                 <>
                   <tr
                     key={exec.id}
                     onClick={() => toggleExecution(exec)}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
                   >
                     <td className="px-6 py-4">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          exec.status === 'success' ? 'bg-green-100 text-green-800' :
-                          exec.status === 'failed' ? 'bg-red-100 text-red-800' :
-                          'bg-blue-100 text-blue-800'
+                          exec.status === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' :
+                          exec.status === 'failed' ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' :
+                          'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300'
                         }`}
                       >
                         {exec.status === 'running' && <span className="animate-spin mr-1">&#9696;</span>}
                         {exec.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {exec.duration_ms != null ? `${exec.duration_ms}ms` : '-'}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {new Date(exec.started_at).toLocaleString()}
                     </td>
                   </tr>
                   {expandedExec === exec.id && (liveLog?.id === exec.id ? (
                     <tr key={`${exec.id}-live`}>
-                      <td colSpan={3} className="px-6 py-4 bg-gray-50">
+                      <td colSpan={3} className="px-6 py-4 bg-gray-50 dark:bg-gray-900/60">
                         <ExecutionLog stdout={liveLog.stdout} stderr={liveLog.stderr} />
                         {liveLog.status === 'running' ? (
-                          <p className="text-sm text-gray-500 mt-2">Running...</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Running...</p>
                         ) : (
-                          <p className="text-sm text-gray-500 mt-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                             Exit code: {liveLog.exit_code ?? '-'} | {liveLog.duration_ms ?? '-'}ms
                           </p>
                         )}
@@ -259,10 +259,10 @@ export default function JobDetailPage() {
                     </tr>
                   ) : expandedDetail && (
                     <tr key={`${exec.id}-detail`}>
-                      <td colSpan={3} className="px-6 py-4 bg-gray-50">
+                      <td colSpan={3} className="px-6 py-4 bg-gray-50 dark:bg-gray-900/60">
                         <ExecutionLog stdout={expandedDetail.stdout} stderr={expandedDetail.stderr} />
                         {expandedDetail.exit_code != null && (
-                          <p className="text-sm text-gray-500 mt-2">Exit code: {expandedDetail.exit_code}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Exit code: {expandedDetail.exit_code}</p>
                         )}
                       </td>
                     </tr>

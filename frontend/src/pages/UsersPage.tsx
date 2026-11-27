@@ -82,7 +82,7 @@ export default function UsersPage() {
 
   if (currentUser?.role !== 'admin') {
     return (
-      <div className="text-center py-12 text-gray-500">Access denied. Admin only.</div>
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">Access denied. Admin only.</div>
     )
   }
 
@@ -91,7 +91,7 @@ export default function UsersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
         <button
           onClick={() => setShowForm(!showForm)}
           className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
@@ -101,38 +101,38 @@ export default function UsersPage() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+        <form onSubmit={handleCreate} className="bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 p-6 rounded-lg shadow mb-6 space-y-4">
           {formError && (
-            <div className="bg-red-50 text-red-700 px-4 py-2 rounded text-sm">{formError}</div>
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-2 rounded text-sm">{formError}</div>
           )}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
               <input
                 type="text"
                 value={formUsername}
                 onChange={(e) => setFormUsername(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
               <input
                 type="password"
                 value={formPassword}
                 onChange={(e) => setFormPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
                 minLength={6}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
               <select
                 value={formRole}
                 onChange={(e) => setFormRole(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
@@ -148,54 +148,54 @@ export default function UsersPage() {
         </form>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 rounded-lg shadow overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">ID</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Username</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Role</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Status</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">Created</th>
-              <th className="text-right px-4 py-3 text-sm font-medium text-gray-500">Actions</th>
+            <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">ID</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Username</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Role</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Status</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Created</th>
+              <th className="text-right px-4 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-b border-gray-100 hover:bg-gray-50">
+              <tr key={u.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 {editingId === u.id ? (
                   <>
-                    <td className="px-4 py-3 text-sm text-gray-500">{u.id}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.id}</td>
                     <td className="px-4 py-3">
                       <input
                         type="text"
                         value={editUsername}
                         onChange={(e) => setEditUsername(e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+                        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-2 py-1 text-sm w-full"
                       />
                     </td>
                     <td className="px-4 py-3">
                       <select
                         value={editRole}
                         onChange={(e) => setEditRole(e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1 text-sm"
+                        className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-2 py-1 text-sm"
                       >
                         <option value="user">User</option>
                         <option value="admin">Admin</option>
                       </select>
                     </td>
-                    <td className="px-4 py-3 text-sm">{u.must_change_password ? 'Force change' : 'Active'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{u.must_change_password ? 'Force change' : 'Active'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(u.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right space-x-2">
                       <button
                         onClick={() => handleUpdate(u.id)}
-                        className="text-blue-600 text-sm hover:underline"
+                        className="text-blue-600 dark:text-blue-400 text-sm hover:underline"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="text-gray-500 text-sm hover:underline"
+                        className="text-gray-500 dark:text-gray-400 text-sm hover:underline"
                       >
                         Cancel
                       </button>
@@ -203,23 +203,23 @@ export default function UsersPage() {
                   </>
                 ) : (
                   <>
-                    <td className="px-4 py-3 text-sm text-gray-500">{u.id}</td>
-                    <td className="px-4 py-3 text-sm font-medium">{u.username}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{u.id}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{u.username}</td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        u.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                        u.role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                       }`}>
                         {u.role}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {u.must_change_password ? (
-                        <span className="text-amber-600 text-xs font-medium">Force change</span>
+                        <span className="text-amber-600 dark:text-amber-400 text-xs font-medium">Force change</span>
                       ) : (
-                        <span className="text-green-600 text-xs font-medium">Active</span>
+                        <span className="text-green-600 dark:text-green-400 text-xs font-medium">Active</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(u.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right space-x-2">
                       {resetPasswordId === u.id ? (
                         <span className="inline-flex gap-1">
@@ -228,17 +228,17 @@ export default function UsersPage() {
                             placeholder="New password"
                             value={resetPassword}
                             onChange={(e) => setResetPassword(e.target.value)}
-                            className="border border-gray-300 rounded px-2 py-1 text-sm w-32"
+                            className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded px-2 py-1 text-sm w-32"
                           />
                           <button
                             onClick={() => handleResetPassword(u.id)}
-                            className="text-blue-600 text-sm hover:underline"
+                            className="text-blue-600 dark:text-blue-400 text-sm hover:underline"
                           >
                             Set
                           </button>
                           <button
                             onClick={() => { setResetPasswordId(null); setResetPassword('') }}
-                            className="text-gray-500 text-sm hover:underline"
+                            className="text-gray-500 dark:text-gray-400 text-sm hover:underline"
                           >
                             X
                           </button>
@@ -247,20 +247,20 @@ export default function UsersPage() {
                         <>
                           <button
                             onClick={() => { setEditingId(u.id); setEditUsername(u.username); setEditRole(u.role) }}
-                            className="text-blue-600 text-sm hover:underline"
+                            className="text-blue-600 dark:text-blue-400 text-sm hover:underline"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => setResetPasswordId(u.id)}
-                            className="text-amber-600 text-sm hover:underline"
+                            className="text-amber-600 dark:text-amber-400 text-sm hover:underline"
                           >
                             Reset PW
                           </button>
                           {u.id !== currentUser?.id && (
                             <button
                               onClick={() => handleDelete(u.id, u.username)}
-                              className="text-red-600 text-sm hover:underline"
+                              className="text-red-600 dark:text-red-400 text-sm hover:underline"
                             >
                               Delete
                             </button>
